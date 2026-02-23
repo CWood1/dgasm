@@ -1,4 +1,5 @@
 %{
+#include "ast.h"
 #include <stdio.h>
 
 int yylex(void);
@@ -8,12 +9,14 @@ void yyerror(char const*);
 %union {
     char *str;
     long number;
+    constant_t constant;
 }
 			
 %token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS
 			
 %type	<str>	IDENTIFIER STRING
 %type	<number>	INTEGER expression
+%type	<constant>	constant_stmt;
 
 %left AND OR NOT XOR
 %left PLUS MINUS
@@ -21,11 +24,13 @@ void yyerror(char const*);
 
 %%
 program:
-		statement  {}
-	| 	program statement  {}
+		{}
+	| 	program constant_stmt  { printf("Const %s=%d", $2.name, $2.value); }
 
-statement:
-		CONST IDENTIFIER EQUALS expression EOL { printf("Defined const %s=%d\n", $2, $4); }
+constant_stmt:
+		CONST IDENTIFIER EQUALS expression EOL { $$ = (constant_t){
+			$2, $4,
+		}; }
 
 expression:
 		INTEGER   { $$ = $1; }

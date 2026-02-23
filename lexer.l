@@ -1,4 +1,5 @@
 %{
+#include "ast.h"
 #include "parser.h"
 #include <stdlib.h>
 %}
