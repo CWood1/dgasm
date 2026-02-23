@@ -1,0 +1,10 @@
+*~
+CMakeFiles
+Makefile
+lexer.c
+lexer.h
+parser.c
+parser.h
+dgasm
+CMakeCache.txt
+cmake_install.cmake
