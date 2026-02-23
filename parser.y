@@ -9,10 +9,11 @@ void yyerror(char const*);
     char *str;
     long number;
 }
-
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON STRING HASH CONST VAR ORG DEV DOLLAR INTEGER IDENTIFIER EOL
-
+			
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS
+			
 %type	<str>	IDENTIFIER STRING
+%type	<number>	INTEGER expression
 
 %left AND OR NOT XOR
 %left PLUS MINUS
@@ -20,15 +21,21 @@ void yyerror(char const*);
 
 %%
 program:
-			statement  {}
-			| program statement  {}
+		statement  {}
+	| 	program statement  {}
 
 statement:
-			directive EOL {}
-
-directive:
-			HASH CONST IDENTIFIER expression { printf("Defined const %s\n", $3); }
+		CONST IDENTIFIER EQUALS expression EOL { printf("Defined const %s=%d\n", $2, $4); }
 
 expression:
-			STRING   { printf("Got expression %s\n", $1); }
+		INTEGER   { $$ = $1; }
+	|	expression PLUS expression  { $$ = $1 + $3; }
+	|	expression MINUS expression  { $$ = $1 - $3; }
+	|	expression MULTIPLY expression  { $$ = $1 * $3; }
+	|	expression DIVIDE expression  { $$ = $1 / $3; }
+	|	LPAREN expression RPAREN  { $$ = $2; }
+	|	expression AND expression  { $$ = $1 & $3; }
+	|	expression OR expression  { $$ = $1 | $3; }
+	|       NOT expression  { $$ = ~$2; }
+	|	expression XOR expression  { $$ = $1 ^ $3; }
 %%

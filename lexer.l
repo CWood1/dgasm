@@ -12,7 +12,10 @@
 ":"                          { return COLON; }
 "["                          { return OPEN_SQUARE; }
 "]"                          { return CLOSE_SQUARE; }
+"("                          { return LPAREN; }
+")"                          { return RPAREN; }
 ","                          { return COMMA; }
+"="                          { return EQUALS; }
 "@"                          { return AT; }
 "."                          { return DOT; }
 "+"                          { return PLUS; }
@@ -24,11 +27,11 @@
 "~"                          { return NOT; }
 "^"                          { return XOR; }
 \"([^\\\"]|\\.)*\"           { yylval.str = strdup(yytext); return STRING; }
-"#"                          { return HASH; }
 const                        { return CONST; }
 var                          { return VAR; }
 org                          { return ORG; }
 dev                          { return DEV; }
+section                      { return SECTION; }
 "$"                          { return DOLLAR; }
 
 [0-9]+                       { yylval.number = strtol(yytext, NULL, 0); return INTEGER; }
