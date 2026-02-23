@@ -26,6 +26,7 @@ void yyerror(char const*);
 program:
 		{}
 	| 	program constant_stmt  { printf("Const %s=%d", $2.name, $2.value); }
+	|	program EOL  {}
 
 constant_stmt:
 		CONST IDENTIFIER EQUALS expression EOL { $$ = (constant_t){
