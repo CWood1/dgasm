@@ -48,7 +48,8 @@ int yywrap() {
 	return 1;
 }
 
-int yyerror(char *s) {
-	fprintf(stderr,"error: %s\n", s);
+int yyerror(program_t* prog, char *s) {
+	fprintf(stderr,
+            "Parse error at line %d near '%s': %s\n", yylineno, yytext, s);
 }
 

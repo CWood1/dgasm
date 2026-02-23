@@ -3,7 +3,7 @@
 #include <string.h>
 
 int yylex(void);
-void yyerror(char const*);
+ void yyerror(program_t*, char const*);
 
 static void append_constant(program_t *prog, constant_t *c) {
     c->next = prog->constanttbl;
@@ -21,6 +21,9 @@ static void append_device(program_t *prog, device_t *d) {
 }
 %}
 
+%parse-param { program_t* prog }
+%define parse.error verbose
+
 %union {
     char *str;
     long number;
@@ -28,7 +31,6 @@ static void append_device(program_t *prog, device_t *d) {
     device_t* device;
     variable_t* variable;
     expression_t* expression;
-    program_t* program;
 }
 			
 %token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS
@@ -48,20 +50,20 @@ static void append_device(program_t *prog, device_t *d) {
 %%
 program:
 		{
-		    $$ = malloc(sizeof(program_t));
+		    prog->constanttbl = NULL;
+		    prog->variabletbl = NULL;
+		    prog->devicetbl = NULL;
 		}
 	| 	program constant_stmt {
-		    append_constant($1, $2);
-		    $$ = $1;
+		    append_constant(prog, $2);
 		}
 	|	program device_stmt {
-		    append_device($1, $2);
-		    $$ = $1;
+		    append_device(prog, $2);
 		}
 	|	program var_stmt {
-		    append_variable($1, $2);
-		    $$ = $1;
+		    append_variable(prog, $2);
 		}
+	|	program EOL {}
 	;
 
 constant_stmt:
