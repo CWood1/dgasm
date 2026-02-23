@@ -6,8 +6,20 @@ typedef struct {
   long value;
 } constant_t;
 
-typedef struct {
+typedef enum {
+  VARIABLE_STRING,
+  VARIABLE_NUMBER,
+} variable_type_t;
 
+typedef union {
+  char* str;
+  long number;
+} variable_value_t;
+
+typedef struct {
+  variable_type_t type;
+  char* name;
+  variable_value_t value;
 } variable_t;
 
 typedef struct {
@@ -15,7 +27,8 @@ typedef struct {
 } section_t;
 
 typedef struct {
-
+  char* name;
+  long value;
 } device_t;
 
 typedef enum {
