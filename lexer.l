@@ -34,6 +34,13 @@ org                          { return ORG; }
 dev                          { return DEV; }
 section                      { return SECTION; }
 "$"                          { return DOLLAR; }
+SKP                          { return SKP; }
+SZC                          { return SZC; }
+SNC                          { return SNC; }
+SZR                          { return SZR; }
+SNR                          { return SNR; }
+SEZ                          { return SEZ; }
+SBN                          { return SBN; }
 
 [0-9]+                       { yylval.number = strtol(yytext, NULL, 0); return INTEGER; }
 0x[0-9A-Fa-f]+               { yylval.number = strtol(yytext, NULL, 0); return INTEGER; }

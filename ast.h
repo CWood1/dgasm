@@ -1,6 +1,8 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+#define MAX_OPERANDS 3
+
 typedef enum {
     EXPR_INTEGER,
     EXPR_IDENTIFIER,
@@ -72,10 +74,66 @@ typedef struct device_t {
   struct device_t* next;
 } device_t;
 
+typedef enum {
+  OPERAND_EXPR,        // normal expression (integer or identifier)
+  OPERAND_INDIRECT,    // @expression
+  OPERAND_SKIP         // skip condition keyword
+} operand_kind_t;
+
+typedef enum {
+  SKIP_SKP,
+  SKIP_SZC,
+  SKIP_SNC,
+  SKIP_SZR,
+  SKIP_SNR,
+  SKIP_SEZ,  // Either carry or result are zero
+  SKIP_SBN,  // Neither carry nor result are zero
+} skip_condition_t;
+
+typedef struct operand {
+  operand_kind_t kind;
+  union {
+    expression_t *expr;      // for normal or indirect
+    skip_condition_t skip;   // for skip keywords
+  } u;
+} operand_t;
+
+typedef struct {
+  int count;
+  operand_t *items[MAX_OPERANDS];
+} operand_list_t;
+
+typedef struct opcode {
+  char* mnemonic;
+  operand_list_t* operands;
+} opcode_t;
+
+typedef enum {
+  STMT_OPCODE,
+  STMT_LABEL,
+  STMT_VARIABLE,
+  STMT_DIRECTIVE
+} statement_type_t;
+
+typedef struct statement {
+  statement_type_t type;
+
+  union {
+    opcode_t*     opcode;
+    char*         label;
+    variable_t*   variable;
+    //    directive_t   directive;
+  };
+
+  struct statement* next;
+} statement_t;
+
 typedef struct {
   constant_t* constanttbl;
-  variable_t* variabletbl;
   device_t* devicetbl;
+  
+  statement_t* head;
+  statement_t* tail;
 } program_t;
 
 #endif // __AST_H__

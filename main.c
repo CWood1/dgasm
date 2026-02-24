@@ -33,8 +33,9 @@ int main(int argc, char** argv) {
   
   program_t* prog = malloc(sizeof(program_t));
   prog->constanttbl = NULL;
-  prog->variabletbl = NULL;
   prog->devicetbl = NULL;
+  prog->head = NULL;
+  prog->tail = NULL;
 
   yyin = f;
   yyparse(prog);
