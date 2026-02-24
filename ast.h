@@ -59,8 +59,6 @@ typedef struct variable_t {
   variable_type_t type;
   char* name;
   variable_value_t value;
-
-  struct variable_t* next;
 } variable_t;
 
 typedef struct {

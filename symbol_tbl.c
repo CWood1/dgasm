@@ -1,11 +1,12 @@
 #include "symbol_tbl.h"
 #include "ast.h"
+#include "assembler.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-symboltbl_t* resolve_symbols(program_t* prog) {
+symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
   symboltbl_t* head = malloc(sizeof(symboltbl_t));
   symboltbl_t* cur = head;
 
@@ -33,6 +34,17 @@ symboltbl_t* resolve_symbols(program_t* prog) {
     cur->value = current_device->value & 0xFFFF;
 
     current_device = current_device->next;
+  }
+
+  offset_t* current_offset = offsets->next;
+  while (current_offset != NULL) {
+    cur->next = malloc(sizeof(symboltbl_t));
+    cur = cur->next;
+
+    cur->name = current_offset->name;
+    cur->value = current_offset->address;
+
+    current_offset = current_offset->next;
   }
 
   return head;

@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+#include <stdio.h>
+
 int yylex(void);
  void yyerror(program_t*, char const*);
 
@@ -77,7 +80,7 @@ void append_variable(program_t *p, variable_t* var) {
 			
 %token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS SKP SZC SNC SZR SNR SEZ SBN
 			
-%type	<str>	IDENTIFIER STRING
+%type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
 %type	<constant>	constant_stmt;
 %type	<device>	device_stmt;
@@ -113,6 +116,9 @@ program:
 	|	program opcode_stmt {
 		    append_opcode(prog, $2);
 		}
+	|	program label_stmt {
+		    append_label(prog, $2);
+		}
 	|	program EOL {}
 	;
 
@@ -129,6 +135,12 @@ device_stmt:
 		    $$ = malloc(sizeof(device_t));
 		    $$->name = strdup($2);
 		    $$->value = $4;
+		}
+	;
+
+label_stmt:
+		IDENTIFIER COLON EOL {
+		    $$ = strdup($1);
 		}
 	;
 

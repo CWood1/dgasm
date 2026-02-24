@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "parser.h"
+#include "assembler.h"
 #include "symbol_tbl.h"
 
 #include <stdio.h>
@@ -41,6 +42,8 @@ int main(int argc, char** argv) {
   yyin = f;
   yyparse(prog);
 
-  symboltbl_t* symbols = resolve_symbols(prog);
-  printf("Symbol AP0 = %d", find_symbol(symbols, "AP0"));
+  offset_t* offsets = pass1(prog);
+  symboltbl_t* symbols = resolve_symbols(prog, offsets);
+  printf("Symbol AP0 = %o\n", find_symbol(symbols, "AP0"));
+  printf("Symbol start = %o\n", find_symbol(symbols, "start"));
 }
