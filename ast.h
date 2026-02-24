@@ -22,20 +22,20 @@ typedef enum {
 } expr_op_t;
 
 typedef struct expression {
-    expr_kind_t kind;
-    union {
-        long number;                 // for EXPR_INTEGER
-        char *identifier;            // for EXPR_IDENTIFIER
-        struct {                      // for EXPR_BINARY
-            expr_op_t op;
-            struct expression *left;
-            struct expression *right;
-        } binary;
-        struct {                      // for EXPR_UNARY
-            expr_op_t op;
-            struct expression *child;
-        } unary;
-    } u;
+  expr_kind_t kind;
+  union {
+    long number;                 // for EXPR_INTEGER
+    char *identifier;            // for EXPR_IDENTIFIER
+    struct {                      // for EXPR_BINARY
+      expr_op_t op;
+      struct expression *left;
+      struct expression *right;
+    } binary;
+    struct {                      // for EXPR_UNARY
+      expr_op_t op;
+      struct expression *child;
+    } unary;
+  } u;
 } expression_t;
 
 typedef struct constant_t {
