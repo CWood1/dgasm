@@ -20,13 +20,17 @@ offset_t* pass1(program_t* prog) {
       // program this
       break;
     case STMT_LABEL:
+      // Labels need to be treated as offsets. Simply, compute the offset and add it to the table
       cur->next = malloc(sizeof(offset_t));
       cur = cur->next;
 
       cur->name = strdup(current_statement->label);
       cur->address = current_address;
       break;
+
     case STMT_VARIABLE:
+      // For variables, add them to the offset table, but then we also need to work out the size and
+      // progress the current address by that far.
       cur->next = malloc(sizeof(offset_t));
       cur = cur->next;
 
@@ -42,8 +46,14 @@ offset_t* pass1(program_t* prog) {
 	break;
       }
       break;
+
     case STMT_DIRECTIVE:
-      // program this
+      // The only directive we currently support is org, which changes the current address.
+      switch (current_statement->directive->type) {
+      case DIRECTIVE_ORG:
+	current_address = current_statement->directive->org;
+	break;
+      }
       break;
     }
 

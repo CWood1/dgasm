@@ -54,13 +54,13 @@ void append_variable(program_t *p, variable_t* var) {
     append_statement(p, s);
 }
 
-/* void append_directive(program_t *p, directive_t dir) { */
-/*     statement_t *s = malloc(sizeof(statement_t)); */
-/*     s->type = STMT_DIRECTIVE; */
-/*     s->directive = dir; */
+void append_directive(program_t *p, directive_t* dir) {
+    statement_t *s = malloc(sizeof(statement_t));
+    s->type = STMT_DIRECTIVE;
+    s->directive = dir;
 
-/*     append_statement(p, s); */
-/* } */
+    append_statement(p, s);
+}
 %}
 
 %parse-param { program_t* prog }
@@ -76,6 +76,7 @@ void append_variable(program_t *p, variable_t* var) {
     operand_list_t* operand_list;
     opcode_t* opcode;
     operand_t* operand;
+    directive_t* directive;
 }
 			
 %token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS SKP SZC SNC SZR SNR SEZ SBN
@@ -90,6 +91,7 @@ void append_variable(program_t *p, variable_t* var) {
 %type	<operand>	operand;
 %type	<opcode>	opcode_stmt;
 %type	<operand_list>	operand_list;
+%type	<directive>	directive_stmt;
 			
 %left AND OR NOT XOR
 %left PLUS MINUS
@@ -119,6 +121,9 @@ program:
 	|	program label_stmt {
 		    append_label(prog, $2);
 		}
+	|	program directive_stmt {
+		    append_directive(prog, $2);
+		}
 	|	program EOL {}
 	;
 
@@ -141,6 +146,14 @@ device_stmt:
 label_stmt:
 		IDENTIFIER COLON EOL {
 		    $$ = strdup($1);
+		}
+	;
+
+directive_stmt:
+		ORG INTEGER EOL {
+		    $$ = malloc(sizeof(directive_t));
+		    $$->type = DIRECTIVE_ORG;
+		    $$->org = $2;
 		}
 	;
 

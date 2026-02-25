@@ -1,6 +1,8 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+#include <stdint.h>
+
 #define MAX_OPERANDS 3
 
 typedef enum {
@@ -107,6 +109,18 @@ typedef struct opcode {
 } opcode_t;
 
 typedef enum {
+  DIRECTIVE_ORG
+} directive_type_t;
+
+typedef struct directive {
+  directive_type_t type;
+
+  union {
+    uint16_t org;
+  };
+} directive_t;
+
+typedef enum {
   STMT_OPCODE,
   STMT_LABEL,
   STMT_VARIABLE,
@@ -120,7 +134,7 @@ typedef struct statement {
     opcode_t*     opcode;
     char*         label;
     variable_t*   variable;
-    //    directive_t   directive;
+    directive_t*   directive;
   };
 
   struct statement* next;
