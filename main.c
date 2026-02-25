@@ -46,4 +46,5 @@ int main(int argc, char** argv) {
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
   printf("Symbol AP0 = %o\n", find_symbol(symbols, "AP0"));
   printf("Symbol start = %o\n", find_symbol(symbols, "start"));
+  printf("Symbol bar = %o\n", find_symbol(symbols, "bar"));
 }
