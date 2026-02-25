@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "assembler.h"
+#include "opcode.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -17,8 +18,11 @@ offset_t* pass1(program_t* prog) {
   while (current_statement != NULL) {
     switch (current_statement->type) {
     case STMT_OPCODE:
-      // program this
+      // Instructions are easy - simply add the encoding size of the instruction to the current address
+      instruction_t inst = find_instruction(current_statement->opcode->mnemonic);
+      current_address += inst.size;
       break;
+
     case STMT_LABEL:
       // Labels need to be treated as offsets. Simply, compute the offset and add it to the table
       cur->next = malloc(sizeof(offset_t));
