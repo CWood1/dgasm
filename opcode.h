@@ -2,11 +2,13 @@
 #define __OPCODE_H__
 
 #include "ast.h"
+#include "symbol_tbl.h"
 #include <stdint.h>
 
 typedef enum {
   ENCODING_IO,
   ENCODING_IONOXFER,
+  ENCODING_FLOW,
   ENCODING_CONSTANT,
 } instruction_encoding_t;
 
@@ -19,6 +21,6 @@ typedef struct {
 } instruction_t;
 
 instruction_t find_instruction(char* opcode);
-int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode);
+int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols);
 
 #endif

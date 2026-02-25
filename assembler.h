@@ -17,7 +17,9 @@ typedef struct {
     uint16_t start_addr;   // first used address
 } output_t;
 
+#include "symbol_tbl.h"
+
 offset_t* pass1(program_t* prog);
-output_t pass2(program_t* prog);
+output_t pass2(program_t* prog, symboltbl_t* symbols);
 
 #endif

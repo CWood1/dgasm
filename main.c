@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
 
   offset_t* offsets = pass1(prog);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
-  output_t output = pass2(prog);
+  output_t output = pass2(prog, symbols);
 
   if (strcmp(outputformat, "bin") == 0) {
     if (outputfn == NULL) {

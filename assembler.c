@@ -1,6 +1,7 @@
 #include "ast.h"
 #include "assembler.h"
 #include "opcode.h"
+#include "eval.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -69,7 +70,7 @@ offset_t* pass1(program_t* prog) {
   return head;
 }
 
-output_t pass2(program_t* prog) {
+output_t pass2(program_t* prog, symboltbl_t* symbols) {
   output_t out = {0};
   uint16_t* buffer = calloc(MAX_MEMORY_WORDS, sizeof(uint16_t));
   if (buffer == NULL) {
@@ -93,9 +94,7 @@ output_t pass2(program_t* prog) {
       break;
 
     case STMT_OPCODE:
-      printf("Encoding instruction at 0%o\n", current_addr);
-      int size = encode_instruction(&buffer, current_addr, stmt->opcode);
-      printf("Encoded instruction: 0%o\n", buffer[current_addr]);
+      int size = encode_instruction(&buffer, current_addr, stmt->opcode, symbols);
 
       if (current_addr < min_addr)
 	min_addr = current_addr;
