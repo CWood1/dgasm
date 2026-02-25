@@ -1,11 +1,24 @@
 #ifndef __OPCODE_H__
 #define __OPCODE_H__
 
+#include "ast.h"
+#include <stdint.h>
+
+typedef enum {
+  ENCODING_IO,
+  ENCODING_IONOXFER,
+  ENCODING_CONSTANT,
+} instruction_encoding_t;
+
 typedef struct {
   char* opcode;
   int size;
+
+  uint16_t base_encoding;
+  instruction_encoding_t encoding_type;
 } instruction_t;
 
 instruction_t find_instruction(char* opcode);
+int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode);
 
 #endif

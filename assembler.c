@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define MAX_MEMORY_WORDS 65536
+
 offset_t* pass1(program_t* prog) {
   // Default to starting at 0100 - just after the zero page
   uint16_t current_address = 0100;
@@ -65,4 +67,64 @@ offset_t* pass1(program_t* prog) {
   }
 
   return head;
+}
+
+output_t pass2(program_t* prog) {
+  output_t out = {0};
+  uint16_t* buffer = calloc(MAX_MEMORY_WORDS, sizeof(uint16_t));
+  if (buffer == NULL) {
+    fprintf(stderr, "Out of memory\n");
+    exit(1);
+  }
+
+  uint16_t min_addr = 0xFFFF;
+  uint16_t max_addr = 0x0000;
+
+  // Start at 0100, until we're told otherwise
+  uint16_t current_addr = 0100;
+  for (statement_t* stmt = prog->head; stmt != NULL; stmt = stmt->next) {
+    switch (stmt->type) {
+    case STMT_DIRECTIVE:
+      switch (stmt->directive->type) {
+      case DIRECTIVE_ORG:
+	current_addr = stmt->directive->org;
+	break;
+      }
+      break;
+
+    case STMT_OPCODE:
+      printf("Encoding instruction at 0%o\n", current_addr);
+      int size = encode_instruction(&buffer, current_addr, stmt->opcode);
+      printf("Encoded instruction: 0%o\n", buffer[current_addr]);
+
+      if (current_addr < min_addr)
+	min_addr = current_addr;
+
+      current_addr += size;
+      if (current_addr > max_addr)
+	max_addr = current_addr;
+
+      break;
+
+    default:
+      // Don't do anything
+    }
+  }
+
+  uint16_t used_size = (max_addr - min_addr) + 1;
+  uint16_t* trimmed = malloc(used_size * sizeof(uint16_t));
+  if (trimmed == NULL) {
+    fprintf(stderr, "Out of memory\n");
+    exit(1);
+  }
+
+  memcpy(trimmed, &buffer[min_addr], used_size * sizeof(uint16_t));
+
+  free(buffer);
+
+  out.data = trimmed;
+  out.size = used_size;
+  out.start_addr = min_addr;
+
+  return out;
 }
