@@ -13,8 +13,8 @@ instruction_t instruction_tbl[] = {
   { "NIOP",      1,     0b0110000011000000, ENCODING_IONOXFER },
 
   { "SKPBN",     1,     0b0110011100000000, ENCODING_IONOXFER },
-  { "SKPDN",     1,     0b0110011101000000, ENCODING_IONOXFER },
-  { "SKPBZ",     1,     0b0110011110000000, ENCODING_IONOXFER },
+  { "SKPDN",     1,     0b0110011110000000, ENCODING_IONOXFER },
+  { "SKPBZ",     1,     0b0110011101000000, ENCODING_IONOXFER },
   { "SKPDZ",     1,     0b0110011111000000, ENCODING_IONOXFER },
 
   { "DIA",       1,     0b0110000100000000, ENCODING_IO },
@@ -48,6 +48,13 @@ instruction_t instruction_tbl[] = {
   { "JSR",       1,     0b0000100000000000, ENCODING_FLOW },
   { "ISZ",       1,     0b0001000000000000, ENCODING_FLOW },
   { "DSZ",       1,     0b0001100000000000, ENCODING_FLOW },
+
+  { "INC",       1,     0b1000001100000000, ENCODING_ALU },
+  { "MOV",       1,     0b1000001000000000, ENCODING_ALU },
+
+  { "LDA",       1,     0b0010000000000000, ENCODING_LOAD },
+
+  { "ELEF",      2,     0b1110010000111000, ENCODING_EXTENDEDLOAD },
 
   { "LMP",       1,     0b1001011100001000, ENCODING_CONSTANT },
   { "HALT",      1,     0b0110011000111111, ENCODING_CONSTANT },
@@ -196,6 +203,125 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   (*buffer)[offset] = encoding;
 }
 
+void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+  uint16_t index = 0;
+
+  if (opcode->operands->count == 2) {
+    index = 0;
+  } else if (opcode->operands->count == 3) {
+    index = eval(opcode->operands->items[2]->u.expr, symbols);
+
+    if (index > 3) {
+      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
+      exit(1);
+    }
+
+    index <<= 8;
+  } else {
+    printf("Instruction %s requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+  }
+
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols) << 11;
+  if (accumulator > 0x2000) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+
+  uint16_t displacement = 0;
+
+  displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+  if (index == 0x100) {
+    displacement -= offset;      
+  }
+
+  if (displacement > 0xFF && displacement < 0xFF00) {
+    printf("Instruction %s requires 8 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
+  }
+  displacement &= 0xFF;
+
+  encoding |= index;
+  encoding |= accumulator;
+  encoding |= displacement;
+  (*buffer)[offset] = encoding;
+}
+
+void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+  uint16_t index = 0;
+
+  if (opcode->operands->count == 2) {
+    index = 0;
+  } else if (opcode->operands->count == 3) {
+    index = eval(opcode->operands->items[2]->u.expr, symbols);
+
+    if (index > 3) {
+      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
+      exit(1);
+    }
+
+    index <<= 8;
+  } else {
+    printf("Instruction %s requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+  }
+
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols) << 11;
+  if (accumulator > 0x2000) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+
+  uint16_t displacement = 0;
+
+  displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+  if (index == 0x100) {
+    displacement -= offset;      
+  }
+
+  encoding |= index;
+  encoding |= accumulator;
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = displacement;
+}
+
+void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  if (opcode->operands->count < 2) {
+    printf("Instruction %s requires at least 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    exit(1);
+  } else if (opcode->operands->count > 3) {
+    printf("Instruction %s requires at most 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    exit(1);
+  }
+
+  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  if (sourceaccumulator > 3) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols);  
+  if (destinationaccumulator > 3) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+
+  uint16_t skip = 0;
+  if (opcode->operands->count == 3) {
+    if (opcode->operands->items[2]->kind != OPERAND_SKIP) {
+      printf("Final parameter for an ALU instruction must be a skip.\n");
+      exit(1);
+    }
+
+    skip = opcode->operands->items[2]->u.skip;
+  }
+
+  encoding |= sourceaccumulator << 13;
+  encoding |= destinationaccumulator << 11;
+  encoding |= skip;
+  (*buffer)[offset] = encoding;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
@@ -223,6 +349,15 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     break;
   case ENCODING_IO:
     encode_io_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_LOAD:
+    encode_load_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_EXTENDEDLOAD:
+    encode_extendedload_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_ALU:
+    encode_alu_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   default:
     printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);

@@ -81,6 +81,7 @@ typedef enum {
 } operand_kind_t;
 
 typedef enum {
+  SKIP_DONT,
   SKIP_SKP,
   SKIP_SZC,
   SKIP_SNC,

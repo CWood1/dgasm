@@ -10,6 +10,9 @@ typedef enum {
   ENCODING_IONOXFER,
   ENCODING_FLOW,
   ENCODING_CONSTANT,
+  ENCODING_ALU,
+  ENCODING_LOAD,
+  ENCODING_EXTENDEDLOAD,
 } instruction_encoding_t;
 
 typedef struct {

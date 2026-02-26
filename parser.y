@@ -79,7 +79,7 @@ void append_directive(program_t *p, directive_t* dir) {
     directive_t* directive;
 }
 			
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS SKP SZC SNC SZR SNR SEZ SBN
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS
 			
 %type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
@@ -244,17 +244,7 @@ expression:
 	;
 
 operand:
-		expression {
-		    $$ = malloc(sizeof(operand_t));
-		    $$->kind = OPERAND_EXPR;
-		    $$->u.expr = $1;
-		}
-	| 	AT expression {
-		    $$ = malloc(sizeof(operand_t));
-		    $$->kind = OPERAND_INDIRECT;
-		    $$->u.expr = $2;
-		}
-	|       SKP {
+	     	SKP {
 		    $$ = malloc(sizeof(operand_t));
 		    $$->kind = OPERAND_SKIP;
 		    $$->u.skip = SKIP_SKP;
@@ -288,6 +278,16 @@ operand:
 		    $$ = malloc(sizeof(operand_t));
 		    $$->kind = OPERAND_SKIP;
 		    $$->u.skip = SKIP_SBN;
+		}
+	|	expression {
+		    $$ = malloc(sizeof(operand_t));
+		    $$->kind = OPERAND_EXPR;
+		    $$->u.expr = $1;
+		}
+	| 	AT expression {
+		    $$ = malloc(sizeof(operand_t));
+		    $$->kind = OPERAND_INDIRECT;
+		    $$->u.expr = $2;
 		}
 ;
 

@@ -105,6 +105,28 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
 
       break;
 
+    case STMT_VARIABLE:
+      switch (stmt->variable->type) {
+      case VARIABLE_STRING:
+	for(int c = 0; stmt->variable->value.str[c] += 0; c++) {
+	  buffer[current_addr++] = stmt->variable->value.str[c];
+	}
+	buffer[current_addr++] = 0;
+	break;
+      case VARIABLE_NUMBER:
+	// Todo: eval this
+	break;
+      }
+
+      if (current_addr < min_addr)
+	min_addr = current_addr;
+
+      current_addr += size;
+      if (current_addr > max_addr)
+	max_addr = current_addr;
+
+      break;
+
     default:
       // Don't do anything
     }
