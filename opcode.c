@@ -49,6 +49,8 @@ instruction_t instruction_tbl[] = {
   { "ISZ",       1,     0b0001000000000000, ENCODING_FLOW },
   { "DSZ",       1,     0b0001100000000000, ENCODING_FLOW },
 
+  { "EJSR",      2,     0b1000110000111000, ENCODING_EXTENDEDFLOW },
+
   { "ADC",       1,     0b1000010000000000, ENCODING_ALU },
   { "ADCZ",      1,     0b1000010000010000, ENCODING_ALU },
   { "ADCO",      1,     0b1000010000100000, ENCODING_ALU },
@@ -368,6 +370,39 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   (*buffer)[offset] = encoding;
 }
 
+void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+  uint16_t x = 0;
+
+  if (opcode->operands->count == 1) {
+    x = 0x100;
+  } else if (opcode->operands->count == 2) {
+    x = eval(opcode->operands->items[0]->u.expr, symbols) << 8;
+
+    if (x > 0x300) {
+      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, x);
+      exit(1);
+    }
+  } else {
+    printf("Instruction %s requires 1 or 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+  }
+
+  uint16_t displacement = 0;
+
+  if (opcode->operands->count == 1) {
+    displacement = eval(opcode->operands->items[0]->u.expr, symbols);
+  } else {
+    displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+  }
+  if (x == 0x100) {
+    displacement -= (offset + 1);
+  }
+
+  encoding |= x;
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = displacement;
+}
+
 void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
   uint16_t index = 0;
@@ -397,7 +432,7 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
 
   displacement = eval(opcode->operands->items[1]->u.expr, symbols);
   if (index == 0x100) {
-    displacement -= offset;      
+    displacement -= offset;
   }
 
   if (displacement > 0xFF && displacement < 0xFF00) {
@@ -557,6 +592,9 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     break;
   case ENCODING_FLOW:
     encode_flow_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_EXTENDEDFLOW:
+    encode_extendedflow_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   case ENCODING_IO:
     encode_io_instruction(buffer, offset, instruction, opcode, symbols);
