@@ -93,7 +93,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       }
       break;
 
-    case STMT_OPCODE:
+    case STMT_OPCODE: {
       int size = encode_instruction(&buffer, current_addr, stmt->opcode, symbols);
 
       if (current_addr < min_addr)
@@ -104,17 +104,22 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
 	max_addr = current_addr;
 
       break;
+    }
 
-    case STMT_VARIABLE:
+    case STMT_VARIABLE: {
+      int size = 0;
+
       switch (stmt->variable->type) {
       case VARIABLE_STRING:
 	for(int c = 0; stmt->variable->value.str[c] += 0; c++) {
-	  buffer[current_addr++] = stmt->variable->value.str[c];
+	  buffer[current_addr + c] = stmt->variable->value.str[c];
 	}
-	buffer[current_addr++] = 0;
+	buffer[current_addr + strlen(stmt->variable->value.str) + 1] = 0;
+	size = strlen(stmt->variable->value.str) + 1;
 	break;
       case VARIABLE_NUMBER:
-	// Todo: eval this
+	buffer[current_addr] = eval(stmt->variable->value.number, symbols);
+	size = 1;
 	break;
       }
 
@@ -126,6 +131,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
 	max_addr = current_addr;
 
       break;
+    }
 
     default:
       // Don't do anything

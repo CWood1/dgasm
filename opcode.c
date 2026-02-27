@@ -235,6 +235,8 @@ instruction_t instruction_tbl[] = {
   { "FSNU",      1,     0b1101011010101000, ENCODING_CONSTANT },
   { "FSNUD",     1,     0b1101111010101000, ENCODING_CONSTANT },
   { "FSNUO",     1,     0b1111011010101000, ENCODING_CONSTANT },
+
+  { "SAVE",      2,     0b1110011111001000, ENCODING_SAVE },
 };
 
 instruction_t find_instruction(char* opcode) {
@@ -459,6 +461,28 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
   (*buffer)[offset] = encoding;
 }
 
+void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  if (opcode->operands == NULL) {
+    printf("Instruction %s requires 1 operand, found 0\n", opcode->mnemonic);
+    exit(1);
+  }
+  if (opcode->operands->count != 1) {
+    printf("Instruction %s requires 1 operand, found %d\n", opcode->mnemonic, opcode->operands->count);
+    exit(1);
+  }
+  if (opcode->operands->items[0]->kind != OPERAND_EXPR) {
+    printf("Instruction %s requries a number.\n", opcode->mnemonic);
+    exit(1);
+  }
+
+  uint16_t immediate = eval(opcode->operands->items[0]->u.expr, symbols);
+
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = immediate;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
@@ -495,6 +519,9 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     break;
   case ENCODING_ALU:
     encode_alu_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_SAVE:
+    encode_save_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   default:
     printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);
