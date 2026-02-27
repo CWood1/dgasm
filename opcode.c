@@ -241,6 +241,8 @@ instruction_t instruction_tbl[] = {
   { "PSH",       1,     0b1000011001001000, ENCODING_TWOACC },
   { "POP",       1,     0b1000011010001000, ENCODING_TWOACC },
   { "XOR",       1,     0b1000000101001000, ENCODING_TWOACC },
+  { "SGE",       1,     0b1000001001001000, ENCODING_TWOACC },
+  { "SGT",       1,     0b1000001000001000, ENCODING_TWOACC },
 };
 
 instruction_t find_instruction(char* opcode) {
