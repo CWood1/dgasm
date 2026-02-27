@@ -237,6 +237,10 @@ instruction_t instruction_tbl[] = {
   { "FSNUO",     1,     0b1111011010101000, ENCODING_CONSTANT },
 
   { "SAVE",      2,     0b1110011111001000, ENCODING_SAVE },
+
+  { "PSH",       1,     0b1000011001001000, ENCODING_TWOACC },
+  { "POP",       1,     0b1000011010001000, ENCODING_TWOACC },
+  { "XOR",       1,     0b1000000101001000, ENCODING_TWOACC },
 };
 
 instruction_t find_instruction(char* opcode) {
@@ -483,6 +487,30 @@ void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instr
   (*buffer)[offset + 1] = immediate;
 }
 
+void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  if (opcode->operands->count != 2) {
+    printf("Instruction %s requires 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    exit(1);
+  }
+
+  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  if (sourceaccumulator > 3) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols);  
+  if (destinationaccumulator > 3) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+
+  encoding |= sourceaccumulator << 13;
+  encoding |= destinationaccumulator << 11;
+  (*buffer)[offset] = encoding;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
@@ -522,6 +550,9 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     break;
   case ENCODING_SAVE:
     encode_save_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_TWOACC:
+    encode_twoacc_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   default:
     printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);

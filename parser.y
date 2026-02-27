@@ -238,6 +238,12 @@ expression:
 		    $$->u.unary.op = OP_NOT;
 		    $$->u.unary.child = $2;
 		}
+	|	MINUS expression {
+		    $$ = malloc(sizeof(expression_t));
+		    $$->kind = EXPR_UNARY;
+		    $$->u.unary.op = OP_MINUS;
+		    $$->u.unary.child = $2;
+		}
 	| 	LPAREN expression RPAREN {
 		    $$ = $2;  /* just return the inner expression */
 		}
