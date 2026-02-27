@@ -1,13 +1,28 @@
 #include "symbol_tbl.h"
 #include "ast.h"
 #include "assembler.h"
+#include "eval.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-int insert_symbol(symboltbl_t** head, const char* name, uint16_t value) {
-  if (find_symbol(*head, name) != 0xFFFFFFFF) {
+uint8_t exists_symbol(symboltbl_t* symbols, const char* symbol) {
+  symboltbl_t* cur = symbols;
+
+  while (cur != NULL && strcmp(cur->name, symbol) != 0) {
+    cur = cur->next;
+  }
+
+  if (cur == NULL) {
+    return 1;
+  }
+
+  return 0;
+}
+
+int insert_symbol(symboltbl_t** head, const char* name, expression_t* value) {
+  if (exists_symbol(*head, name) != 1) {
     return -1;
   }
 
@@ -34,7 +49,7 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
       exit(1);
     }
 
-    if (insert_symbol(&head, current_const->name, current_const->value->u.number & 0xFFFF) != 0) {
+    if (insert_symbol(&head, current_const->name, current_const->value) != 0) {
       printf("Multiple definitions for symbol %s.\n", current_const->name);
       exit(1);
     }
@@ -44,7 +59,11 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
 
   device_t* current_device = prog->devicetbl;
   while (current_device != NULL) {
-    if (insert_symbol(&head, current_device->name, current_device->value & 0xFFFF) != 0) {
+    expression_t* value = malloc(sizeof(expression_t));
+    value->kind = EXPR_INTEGER;
+    value->u.number = current_device->value & 0xFFFF;
+
+    if (insert_symbol(&head, current_device->name, value) != 0) {
       printf("Multiple definitions for symbol %s.\n", current_const->name);
       exit(1);
     }
@@ -54,7 +73,11 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
 
   offset_t* current_offset = offsets->next;
   while (current_offset != NULL) {
-    if (insert_symbol(&head, current_offset->name, current_offset->address) != 0) {
+    expression_t* value = malloc(sizeof(expression_t));
+    value->kind = EXPR_INTEGER;
+    value->u.number = current_offset->address;
+    
+    if (insert_symbol(&head, current_offset->name, value) != 0) {
       printf("Multiple definitions for symbol %s.\n", current_offset->name);
       exit(1);
     }
@@ -76,5 +99,5 @@ uint32_t find_symbol(symboltbl_t* symbols, const char* symbol) {
     return 0xFFFFFFFF;
   }
 
-  return cur->value;
+  return eval(cur->value, symbols);
 }

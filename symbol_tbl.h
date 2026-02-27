@@ -7,7 +7,7 @@
 
 typedef struct symboltbl {
   char* name;
-  uint16_t value;
+  expression_t* value;
 
   struct symboltbl* next;
 } symboltbl_t;
