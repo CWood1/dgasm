@@ -51,6 +51,9 @@ offset_t* pass1(program_t* prog) {
       case VARIABLE_NUMBER:
 	current_address += 1;
 	break;
+      case VARIABLE_RESV:
+	current_address += current_statement->variable->value.resv;
+	break;
       }
       break;
 
@@ -120,6 +123,9 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       case VARIABLE_NUMBER:
 	buffer[current_addr] = eval(stmt->variable->value.number, symbols);
 	size = 1;
+	break;
+      case VARIABLE_RESV:
+	size = stmt->variable->value.resv;
 	break;
       }
 

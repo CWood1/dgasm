@@ -79,7 +79,7 @@ void append_directive(program_t *p, directive_t* dir) {
     directive_t* directive;
 }
 			
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV
 			
 %type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
@@ -169,6 +169,12 @@ var_stmt:
 		    $$->type = VARIABLE_STRING;
 		    $$->name = strdup($2);
 		    $$->value = (variable_value_t){ .str = $4 };
+		}
+	|	VAR IDENTIFIER RESV INTEGER EOL {
+		    $$ = malloc(sizeof(variable_t));
+		    $$->type = VARIABLE_RESV;
+		    $$->name = strdup($2);
+		    $$->value = (variable_value_t){ .resv = $4 };
 		}
 	;
 

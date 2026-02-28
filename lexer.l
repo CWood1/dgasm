@@ -90,6 +90,7 @@ var                          { return VAR; }
 org                          { return ORG; }
 dev                          { return DEV; }
 section                      { return SECTION; }
+resv                         { return RESV; }
 "$"                          { return DOLLAR; }
 SKP                          { return SKP; }
 SZC                          { return SZC; }

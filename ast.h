@@ -50,11 +50,13 @@ typedef struct constant_t {
 typedef enum {
   VARIABLE_STRING,
   VARIABLE_NUMBER,
+  VARIABLE_RESV,
 } variable_type_t;
 
 typedef union {
   char* str;
   expression_t* number;
+  long resv;
 } variable_value_t;
 
 typedef struct variable_t {
