@@ -339,7 +339,7 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   if (opcode->operands->count == 1) {
     x = 0x100;
   } else if (opcode->operands->count == 2) {
-    x = eval(opcode->operands->items[0]->u.expr, symbols) << 8;
+    x = eval(opcode->operands->items[1]->u.expr, symbols) << 8;
 
     if (x > 0x300) {
       printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, x);
@@ -351,11 +351,7 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
 
   uint16_t displacement = 0;
 
-  if (opcode->operands->count == 1) {
-    displacement = eval(opcode->operands->items[0]->u.expr, symbols);
-  } else {
-    displacement = eval(opcode->operands->items[1]->u.expr, symbols);
-  }
+  displacement = eval(opcode->operands->items[0]->u.expr, symbols);
   if (x == 0x100) {
     displacement -= offset;      
   }
