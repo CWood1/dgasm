@@ -16,6 +16,7 @@ typedef enum {
   ENCODING_EXTENDEDLOAD,
   ENCODING_SAVE,
   ENCODING_TWOACC,
+  ENCODING_ONEACC,
 } instruction_encoding_t;
 
 typedef struct {

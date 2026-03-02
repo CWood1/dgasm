@@ -65,6 +65,9 @@ offset_t* pass1(program_t* prog) {
 	break;
       }
       break;
+    case STMT_DW:
+      current_address += current_statement->dw->count;
+      break;
     }
 
     current_statement = current_statement->next;
@@ -127,6 +130,24 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       case VARIABLE_RESV:
 	size = stmt->variable->value.resv;
 	break;
+      }
+
+      if (current_addr < min_addr)
+	min_addr = current_addr;
+
+      current_addr += size;
+      if (current_addr > max_addr)
+	max_addr = current_addr;
+
+      break;
+    }
+
+    case STMT_DW: {
+      int size = 0;
+
+      while (size < stmt->dw->count) {
+	buffer[current_addr + size] = eval(stmt->dw->items[size], symbols);
+	size++;
       }
 
       if (current_addr < min_addr)

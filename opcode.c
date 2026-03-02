@@ -265,6 +265,10 @@ instruction_t instruction_tbl[] = {
   { "SZBO",      1,     0b1000000110010000, ENCODING_TWOACC },
   { "XCH",       1,     0b1000000111001000, ENCODING_TWOACC },
   { "XOR",       1,     0b1000000101001000, ENCODING_TWOACC },
+
+  { "MSP",       1,     0b1000011011111000, ENCODING_ONEACC },
+  { "HLV",       1,     0b1100011011111000, ENCODING_ONEACC },
+  { "XCT",       1,     0b1010011011111000, ENCODING_ONEACC },
 };
 
 instruction_t find_instruction(char* opcode) {
@@ -564,6 +568,24 @@ void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   (*buffer)[offset] = encoding;
 }
 
+void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  if (opcode->operands->count != 1) {
+    printf("Instruction %s requires 1 operand, found %d\n", opcode->mnemonic, opcode->operands->count);
+    exit(1);
+  }
+
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  if (accumulator > 3) {
+    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    exit(1);
+  }
+
+  encoding |= accumulator << 11;
+  (*buffer)[offset] = encoding;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
@@ -609,6 +631,9 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     break;
   case ENCODING_TWOACC:
     encode_twoacc_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_ONEACC:
+    encode_oneacc_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   default:
     printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);

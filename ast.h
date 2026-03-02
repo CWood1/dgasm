@@ -2,6 +2,7 @@
 #define __AST_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define MAX_OPERANDS 3
 
@@ -123,11 +124,18 @@ typedef struct directive {
   };
 } directive_t;
 
+typedef struct {
+    size_t count;
+    size_t capacity;
+    expression_t **items;
+} expr_list_t;
+
 typedef enum {
   STMT_OPCODE,
   STMT_LABEL,
   STMT_VARIABLE,
-  STMT_DIRECTIVE
+  STMT_DIRECTIVE,
+  STMT_DW
 } statement_type_t;
 
 typedef struct statement {
@@ -138,6 +146,7 @@ typedef struct statement {
     char*         label;
     variable_t*   variable;
     directive_t*   directive;
+    expr_list_t*   dw;
   };
 
   struct statement* next;

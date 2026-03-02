@@ -54,6 +54,14 @@ void append_variable(program_t *p, variable_t* var) {
     append_statement(p, s);
 }
 
+void append_dw(program_t* p, expr_list_t* dw) {
+    statement_t* s = malloc(sizeof(statement_t));
+    s->type = STMT_DW;
+    s->dw = dw;
+
+    append_statement(p, s);
+}
+
 void append_directive(program_t *p, directive_t* dir) {
     statement_t *s = malloc(sizeof(statement_t));
     s->type = STMT_DIRECTIVE;
@@ -77,9 +85,10 @@ void append_directive(program_t *p, directive_t* dir) {
     opcode_t* opcode;
     operand_t* operand;
     directive_t* directive;
+    expr_list_t* expr_list;
 }
 			
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV DW
 			
 %type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
@@ -92,6 +101,7 @@ void append_directive(program_t *p, directive_t* dir) {
 %type	<opcode>	opcode_stmt;
 %type	<operand_list>	operand_list;
 %type	<directive>	directive_stmt;
+%type	<expr_list>	expr_list dw_stmt;
 			
 %left AND OR NOT XOR
 %left PLUS MINUS
@@ -123,6 +133,9 @@ program:
 		}
 	|	program directive_stmt {
 		    append_directive(prog, $2);
+		}
+	|	program dw_stmt {
+		    append_dw(prog, $2);
 		}
 	|	program EOL {}
 	;
@@ -177,6 +190,32 @@ var_stmt:
 		    $$->value = (variable_value_t){ .resv = $4 };
 		}
 	;
+
+expr_list:
+        expression {
+            $$ = malloc(sizeof(expr_list_t));
+            $$->count = 1;
+            $$->capacity = 4;
+            $$->items = malloc(sizeof(expression_t*) * $$->capacity);
+            $$->items[0] = $1;
+        }
+    |   expr_list COMMA expression {
+            if ($1->count >= $1->capacity) {
+                $1->capacity *= 2;
+                $1->items = realloc($1->items,
+                                    sizeof(expression_t*) * $1->capacity);
+            }
+
+            $1->items[$1->count++] = $3;
+            $$ = $1;
+        }
+;
+
+dw_stmt:
+        DW expr_list EOL {
+	    $$ = $2;
+        }
+;
 
 expression:
 		INTEGER {

@@ -91,6 +91,7 @@ org                          { return ORG; }
 dev                          { return DEV; }
 section                      { return SECTION; }
 resv                         { return RESV; }
+dw                           { return DW; }
 "$"                          { return DOLLAR; }
 SKP                          { return SKP; }
 SZC                          { return SZC; }
