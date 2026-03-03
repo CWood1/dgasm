@@ -398,6 +398,12 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
     displacement -= (offset + 1);
   }
 
+  if (displacement > 0x3FFF && displacement < 0xC000) {
+    printf("Instruction %s requires 15 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
+  }
+  
+  displacement &= 0x7FFF;
+  
   encoding |= x;
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = displacement;
