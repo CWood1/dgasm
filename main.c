@@ -46,7 +46,6 @@ int write_octal_raw(FILE *stream, const output_t *out) {
 
     for (uint16_t i = 0; i < out->size; i++, addr++) {
         fprintf(stream, "%06o\n",
-                addr,
                 out->data[i]);
     }
 
