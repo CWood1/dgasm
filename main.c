@@ -38,6 +38,21 @@ int write_octal_listing(FILE *stream, const output_t *out) {
     return 0;
 }
 
+int write_octal_raw(FILE *stream, const output_t *out) {
+    if (!stream || !out)
+        return -1;
+
+    uint16_t addr = out->start_addr;
+
+    for (uint16_t i = 0; i < out->size; i++, addr++) {
+        fprintf(stream, "%06o\n",
+                addr,
+                out->data[i]);
+    }
+
+    return 0;
+}
+
 void usage() {
   printf("Usage:\n");
   printf("dgasm -t <cpu> -o <output> -f <format> input.s\n\n");
@@ -126,10 +141,10 @@ int main(int argc, char** argv) {
         return -1;
       }
 
-      write_octal_listing(out, &output);
+      write_octal_raw(out, &output);
       fclose(out);
     } else {
-      write_octal_listing(stdout, &output);
+      write_octal_raw(stdout, &output);
     }
   }
 
