@@ -15,6 +15,6 @@ typedef struct symboltbl {
 #include "assembler.h"
 
 symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets);
-uint32_t find_symbol(symboltbl_t* symbols, const char* symbol);
+uint32_t find_symbol(symboltbl_t* symbols, const char* symbol, int offset);
 
 #endif

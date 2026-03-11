@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-uint16_t eval(expression_t* expr, symboltbl_t* symbols) {
+uint16_t eval(expression_t* expr, symboltbl_t* symbols, int offset) {
   if (!expr) {
     fprintf(stderr, "Internal error: NULL expression\n");
     exit(1);
@@ -17,8 +17,14 @@ uint16_t eval(expression_t* expr, symboltbl_t* symbols) {
   case EXPR_INTEGER:
     return (uint16_t)(expr->u.number & 0xFFFF);
 
+  case EXPR_INDIRECT:
+    return (uint16_t)(expr->u.number & 0xFFFF);
+
+  case EXPR_PC:
+    return (uint16_t)offset;
+
   case EXPR_IDENTIFIER: {
-    uint32_t value = find_symbol(symbols, expr->u.identifier);
+    uint32_t value = find_symbol(symbols, expr->u.identifier, offset);
 
     if (value == 0xFFFFFFFF) {
       fprintf(stderr, "Undefined symbol: %s\n",
@@ -30,8 +36,8 @@ uint16_t eval(expression_t* expr, symboltbl_t* symbols) {
   }
 
   case EXPR_BINARY:
-    left  = eval(expr->u.binary.left, symbols);
-    right = eval(expr->u.binary.right, symbols);
+    left  = eval(expr->u.binary.left, symbols, offset);
+    right = eval(expr->u.binary.right, symbols, offset);
 
     switch (expr->u.binary.op) {
 
@@ -75,7 +81,7 @@ uint16_t eval(expression_t* expr, symboltbl_t* symbols) {
     return (uint16_t)(result & 0xFFFF);
 
   case EXPR_UNARY:
-    left = eval(expr->u.unary.child, symbols);
+    left = eval(expr->u.unary.child, symbols, offset);
 
     switch (expr->u.unary.op) {
 

@@ -231,6 +231,15 @@ expression:
 		    $$->kind = EXPR_INTEGER;
 		    $$->u.number = $1;
 		}
+	|	AT INTEGER {
+		    $$ = malloc(sizeof(expression_t));
+		    $$->kind = EXPR_INDIRECT;
+		    $$->u.number = $2;
+		}
+	|	DOT {
+		    $$ = malloc(sizeof(expression_t));
+		    $$->kind = EXPR_PC;
+		}
 	| 	IDENTIFIER {
 		    $$ = malloc(sizeof(expression_t));
 		    $$->kind = EXPR_IDENTIFIER;

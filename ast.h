@@ -8,6 +8,8 @@
 
 typedef enum {
     EXPR_INTEGER,
+    EXPR_INDIRECT,
+    EXPR_PC,
     EXPR_IDENTIFIER,
     EXPR_BINARY,
     EXPR_UNARY

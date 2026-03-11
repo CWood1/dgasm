@@ -298,7 +298,7 @@ void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* i
     exit(1);
   }
 
-  uint16_t device = eval(opcode->operands->items[0]->u.expr, symbols);
+  uint16_t device = eval(opcode->operands->items[0]->u.expr, symbols, offset);
 
   if (device > 077) {
     printf("Instruction %s requires a device. Device 0%o is out of bounds.\n", opcode->mnemonic, device);
@@ -321,12 +321,12 @@ void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruc
     exit(1);
   }
 
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols) << 11;
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
   if (accumulator > 0x2000) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
   }
-  uint16_t device = eval(opcode->operands->items[1]->u.expr, symbols);
+  uint16_t device = eval(opcode->operands->items[1]->u.expr, symbols, offset);
 
   if (device > 077) {
     printf("Instruction %s requires a device. Device 0%o is out of bounds.\n", opcode->mnemonic, device);
@@ -345,7 +345,7 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   if (opcode->opcode->operands->count == 1) {
     x = 0x100;
   } else if (opcode->opcode->operands->count == 2) {
-    x = eval(opcode->opcode->operands->items[1]->u.expr, symbols) << 8;
+    x = eval(opcode->opcode->operands->items[1]->u.expr, symbols, offset) << 8;
 
     if (x > 0x300) {
       report_error(opcode, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->opcode->mnemonic, x);
@@ -357,7 +357,7 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
 
   uint16_t displacement = 0;
 
-  displacement = eval(opcode->opcode->operands->items[0]->u.expr, symbols);
+  displacement = eval(opcode->opcode->operands->items[0]->u.expr, symbols, offset);
   if (x == 0x100) {
     if ((int16_t)displacement - (int16_t)offset < -128) {
       report_error(opcode, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
@@ -366,11 +366,11 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
     }
     displacement -= offset;
   }
-
-  if (displacement > 0xFF && displacement < 0xFF00) {
-    report_error(opcode, "Instruction %s requires 8 bit displacement. 0%o is out of bounds.", opcode->opcode->mnemonic, displacement);
-  }
   displacement &= 0xFF;
+
+  if (opcode->opcode->operands->items[0]->kind == EXPR_INDIRECT) {
+    encoding |= 0x400;
+  }
 
   encoding |= x;
   encoding |= displacement;
@@ -386,7 +386,7 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
   if (opcode->operands->count == 1) {
     x = 0x100;
   } else if (opcode->operands->count == 2) {
-    x = eval(opcode->operands->items[0]->u.expr, symbols) << 8;
+    x = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 8;
 
     if (x > 0x300) {
       report_error(opcode_stmt, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->mnemonic, x);
@@ -399,9 +399,9 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
   uint16_t displacement = 0;
 
   if (opcode->operands->count == 1) {
-    displacement = eval(opcode->operands->items[0]->u.expr, symbols);
+    displacement = eval(opcode->operands->items[0]->u.expr, symbols, offset);
   } else {
-    displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+    displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
   }
   if (x == 0x100) {
     if ((int16_t) displacement - (int16_t)offset < -0100000) {
@@ -415,50 +415,59 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
   if (displacement > 0x3FFF && displacement < 0xC000) {
     printf("Instruction %s requires 15 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
   }
-  
+
   displacement &= 0x7FFF;
+  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
+    displacement |= 0x8000;
+  }
   
   encoding |= x;
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = displacement;
 }
 
-void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
   uint16_t index = 0;
 
   if (opcode->operands->count == 2) {
     index = 0;
   } else if (opcode->operands->count == 3) {
-    index = eval(opcode->operands->items[2]->u.expr, symbols);
+    index = eval(opcode->operands->items[2]->u.expr, symbols, offset);
 
     if (index > 3) {
-      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
+      report_error(opcode_stmt, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
       exit(1);
     }
 
     index <<= 8;
   } else {
-    printf("Instruction %s requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    report_error(opcode_stmt, "Instruction %s requires 2 or 3 operands, found %d", opcode->mnemonic, opcode->operands->count);
   }
 
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols) << 11;
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
   if (accumulator > 0x2000) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.");
     exit(1);
   }
 
   uint16_t displacement = 0;
 
-  displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+  displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
   if (index == 0x100) {
+    if ((int16_t)displacement - (int16_t)offset < -128) {
+      report_error(opcode_stmt, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
+    } else if (displacement - offset > 127) {
+      report_error(opcode_stmt, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->mnemonic, displacement - offset);
+    }
     displacement -= offset;
   }
-
-  if (displacement > 0xFF && displacement < 0xFF00) {
-    printf("Instruction %s requires 8 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
-  }
   displacement &= 0xFF;
+
+  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
+    encoding |= 0x400;
+  }
 
   encoding |= index;
   encoding |= accumulator;
@@ -473,7 +482,7 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
   if (opcode->operands->count == 2) {
     index = 0;
   } else if (opcode->operands->count == 3) {
-    index = eval(opcode->operands->items[2]->u.expr, symbols);
+    index = eval(opcode->operands->items[2]->u.expr, symbols, offset);
 
     if (index > 3) {
       printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
@@ -485,7 +494,7 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
     printf("Instruction %s requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
   }
 
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols) << 11;
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
   if (accumulator > 0x2000) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
@@ -493,9 +502,17 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
 
   uint16_t displacement = 0;
 
-  displacement = eval(opcode->operands->items[1]->u.expr, symbols);
+  displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
   if (index == 0x100) {
     displacement -= offset;      
+  }
+
+  if (displacement > 0x3FFF && displacement < 0xC000) {
+    printf("Instruction %s requires 15 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
+  }
+
+  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
+    displacement |= 0x8000;
   }
 
   encoding |= index;
@@ -515,12 +532,12 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
     exit(1);
   }
 
-  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
   if (sourceaccumulator > 3) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
   }
-  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols);  
+  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols, offset);  
   if (destinationaccumulator > 3) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
@@ -558,7 +575,7 @@ void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instr
     exit(1);
   }
 
-  uint16_t immediate = eval(opcode->operands->items[0]->u.expr, symbols);
+  uint16_t immediate = eval(opcode->operands->items[0]->u.expr, symbols, offset);
 
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = immediate;
@@ -572,12 +589,12 @@ void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
     exit(1);
   }
 
-  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
   if (sourceaccumulator > 3) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
   }
-  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols);  
+  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols, offset);  
   if (destinationaccumulator > 3) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
@@ -596,7 +613,7 @@ void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
     exit(1);
   }
 
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols);
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
   if (accumulator > 3) {
     printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
@@ -645,7 +662,7 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     encode_io_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   case ENCODING_LOAD:
-    encode_load_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_load_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDLOAD:
     encode_extendedload_instruction(buffer, offset, instruction, opcode, symbols);

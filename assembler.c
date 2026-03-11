@@ -159,7 +159,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
 	break;
       }
       case VARIABLE_NUMBER:
-	buffer[current_addr] = eval(stmt->variable->value.number, symbols);
+	buffer[current_addr] = eval(stmt->variable->value.number, symbols, current_addr);
 	size = 1;
 	break;
       case VARIABLE_RESV:
@@ -181,7 +181,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       int size = 0;
 
       while (size < stmt->dw->count) {
-	buffer[current_addr + size] = eval(stmt->dw->items[size], symbols);
+	buffer[current_addr + size] = eval(stmt->dw->items[size], symbols, current_addr);
 	size++;
       }
 

@@ -88,7 +88,7 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
   return head;
 }
 
-uint32_t find_symbol(symboltbl_t* symbols, const char* symbol) {
+uint32_t find_symbol(symboltbl_t* symbols, const char* symbol, int offset) {
   symboltbl_t* cur = symbols;
 
   while (cur != NULL && strcmp(cur->name, symbol) != 0) {
@@ -99,5 +99,5 @@ uint32_t find_symbol(symboltbl_t* symbols, const char* symbol) {
     return 0xFFFFFFFF;
   }
 
-  return eval(cur->value, symbols);
+  return eval(cur->value, symbols, offset);
 }
