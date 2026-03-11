@@ -11,52 +11,69 @@
 extern FILE* yyin;
 
 int write_raw_binary(const char *filename, const output_t *out) {
-    FILE *f = fopen(filename, "wb");
-    if (!f) {
-        perror("fopen");
-        return -1;
-    }
+  FILE *f = fopen(filename, "wb");
+  if (!f) {
+    perror("fopen");
+    return -1;
+  }
 
-    fwrite(out->data, sizeof(uint16_t), out->size, f);
+  fwrite(out->data, sizeof(uint16_t), out->size, f);
 
-    fclose(f);
-    return 0;
+  fclose(f);
+  return 0;
 }
 
 int write_octal_listing(FILE *stream, const output_t *out) {
-    if (!stream || !out)
-        return -1;
+  if (!stream || !out)
+    return -1;
 
-    uint16_t addr = out->start_addr;
+  uint16_t addr = out->start_addr;
 
-    for (uint16_t i = 0; i < out->size; i++, addr++) {
-        fprintf(stream, "%06o: %06o\n",
-                addr,
-                out->data[i]);
-    }
+  for (uint16_t i = 0; i < out->size; i++, addr++) {
+    fprintf(stream, "%06o: %06o\n",
+	    addr,
+	    out->data[i]);
+  }
 
-    return 0;
+  return 0;
 }
 
-int write_octal_raw(FILE *stream, const output_t *out) {
-    if (!stream || !out)
-        return -1;
+int write_octal_simh(FILE *stream, const output_t* out) {
+  if (!stream || !out)
+    return -1;
 
-    uint16_t addr = out->start_addr;
+  uint16_t addr = out->start_addr;
 
-    for (uint16_t i = 0; i < out->size; i++, addr++) {
-        fprintf(stream, "%06o\n",
-                out->data[i]);
-    }
+  for (uint16_t i = 0; i < out->size; i++, addr++) {
+    fprintf(stream, "dep %06o %06o\n",
+	    addr,
+	    out->data[i]);
+  }
 
-    return 0;
+  return 0;
+}
+
+int write_octal_eclipse(FILE *stream, const output_t *out) {
+  if (!stream || !out)
+    return -1;
+
+  uint16_t addr = out->start_addr;
+
+  printf("K %o/\n", addr);
+
+  for (uint16_t i = 0; i < out->size; i++, addr++) {
+    fprintf(stream, "%06o\n",
+	    out->data[i]);
+  }
+
+  return 0;
 }
 
 void usage() {
   printf("Usage:\n");
   printf("dgasm -t <cpu> -o <output> -f <format> input.s\n\n");
   printf("CPU options:\n\tnova1\n\tnova3\n\tnova4\n\teclipse140\n\n");
-  printf("Output format options:\n\tbinary\n\toctal\n");
+  printf("Output format options:\n\tbinary\n\toctal\n\teclipse\n\tsimh");
 }
 
 int main(int argc, char** argv) {
@@ -74,7 +91,9 @@ int main(int argc, char** argv) {
 
     case 'f':      
       if (strcmp(optarg, "bin") == 0 ||
-	  strcmp(optarg, "octal") == 0) {
+	  strcmp(optarg, "octal") == 0 ||
+	  strcmp(optarg, "eclipse") == 0 ||
+	  strcmp(optarg, "simh") == 0) {
 	outputformat = optarg;
       } else {
 	fprintf(stderr,
@@ -140,10 +159,20 @@ int main(int argc, char** argv) {
         return -1;
       }
 
-      write_octal_raw(out, &output);
+      if (strcmp(outputformat, "octal") == 0)
+	write_octal_listing(out, &output);
+      else if (strcmp(outputformat, "eclipse") == 0)
+	write_octal_eclipse(out, &output);
+      else if (strcmp(outputformat, "simh") == 0)
+	write_octal_simh(out, &output);
       fclose(out);
     } else {
-      write_octal_raw(stdout, &output);
+      if (strcmp(outputformat, "octal") == 0)
+	write_octal_listing(stdout, &output);
+      else if (strcmp(outputformat, "eclipse") == 0)
+	write_octal_eclipse(stdout, &output);
+      else if (strcmp(outputformat, "simh") == 0)
+	write_octal_simh(stdout, &output);
     }
   }
 
