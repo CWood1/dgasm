@@ -1,14 +1,34 @@
 %{
 #include "ast.h"
 #include "parser.h"
+#include "error.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #define MAX_STRING 4096
+#define YY_USER_ACTION append_to_line(yytext, yyleng);
 
 static char string_buf[MAX_STRING];
 static char *string_buf_ptr;
+
+char* current_line = NULL;
+static size_t current_line_len = 0;
+
+void append_to_line(const char* text, int len) {
+    for(int i = 0; i < len; i++) {
+	if (text[i] == '\n') {
+	    source_add_line(current_line ? current_line : "");
+	    free(current_line);
+	    current_line = strdup("");
+	    current_line_len = 0;
+        } else {
+	    current_line = realloc(current_line, current_line_len + 2);
+	    current_line[current_line_len++] = text[i];
+	    current_line[current_line_len] = '\0';
+	}
+    }
+}
 
 %}
 
@@ -53,7 +73,7 @@ static char *string_buf_ptr;
                                exit(1);
                              }
 
-<string>\\n                  *string_buf_ptr++ = '\n';
+<string>\\n                  { *string_buf_ptr++ = '\n'; }
 <string>\\t                  *string_buf_ptr++ = '\t';
 <string>\\r                  *string_buf_ptr++ = '\r';
 <string>\\b                  *string_buf_ptr++ = '\b';

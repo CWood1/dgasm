@@ -100,7 +100,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       break;
 
     case STMT_OPCODE: {
-      int size = encode_instruction(&buffer, current_addr, stmt->opcode, symbols);
+      int size = encode_instruction(&buffer, current_addr, stmt, symbols);
 
       if (current_addr < min_addr)
 	min_addr = current_addr;

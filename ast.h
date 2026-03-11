@@ -139,6 +139,9 @@ typedef enum {
 } statement_type_t;
 
 typedef struct statement {
+  // Error reporting primitives
+  int lineno;
+
   statement_type_t type;
 
   union {

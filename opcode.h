@@ -28,6 +28,6 @@ typedef struct {
 } instruction_t;
 
 instruction_t find_instruction(char* opcode);
-int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols);
+int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols);
 
 #endif

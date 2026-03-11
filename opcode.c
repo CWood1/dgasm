@@ -1,5 +1,6 @@
 #include "opcode.h"
 #include "eval.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -336,32 +337,37 @@ void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruc
   (*buffer)[offset] = encoding;
 }
 
-void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
   uint16_t x = 0;
 
-  if (opcode->operands->count == 1) {
+  if (opcode->opcode->operands->count == 1) {
     x = 0x100;
-  } else if (opcode->operands->count == 2) {
-    x = eval(opcode->operands->items[1]->u.expr, symbols) << 8;
+  } else if (opcode->opcode->operands->count == 2) {
+    x = eval(opcode->opcode->operands->items[1]->u.expr, symbols) << 8;
 
     if (x > 0x300) {
-      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, x);
+      report_error(opcode, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->opcode->mnemonic, x);
       exit(1);
     }
   } else {
-    printf("Instruction %s requires 1 or 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    report_error(opcode, "Instruction %s requires 1 or 2 operands, found %d", opcode->opcode->mnemonic, opcode->opcode->operands->count);
   }
 
   uint16_t displacement = 0;
 
-  displacement = eval(opcode->operands->items[0]->u.expr, symbols);
+  displacement = eval(opcode->opcode->operands->items[0]->u.expr, symbols);
   if (x == 0x100) {
-    displacement -= offset;      
+    if ((int16_t)displacement - (int16_t)offset < -128) {
+      report_error(opcode, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
+    } else if (displacement - offset > 127) {
+      report_error(opcode, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->opcode->mnemonic, displacement - offset);
+    }
+    displacement -= offset;
   }
 
   if (displacement > 0xFF && displacement < 0xFF00) {
-    printf("Instruction %s requires 8 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
+    report_error(opcode, "Instruction %s requires 8 bit displacement. 0%o is out of bounds.", opcode->opcode->mnemonic, displacement);
   }
   displacement &= 0xFF;
 
@@ -592,9 +598,16 @@ void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   (*buffer)[offset] = encoding;
 }
 
-int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltbl_t* symbols) {
+int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
+
+  if (opcode_stmt->type != STMT_OPCODE) {
+    fprintf(stderr, "Attempted to encode instruction on a not instruction statement. This is a bug in the assembler.");
+    exit(1);
+  }
+
+  opcode_t* opcode = opcode_stmt->opcode;
 
   for (int cur = 0; cur < instruction_count; cur++) {
     if (strcmp(opcode->mnemonic, instruction_tbl[cur].opcode) == 0) {
@@ -615,7 +628,7 @@ int encode_instruction(uint16_t** buffer, int offset, opcode_t* opcode, symboltb
     encode_ionoxfer_instruction(buffer, offset, instruction, opcode, symbols);
     break;
   case ENCODING_FLOW:
-    encode_flow_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_flow_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDFLOW:
     encode_extendedflow_instruction(buffer, offset, instruction, opcode, symbols);

@@ -7,7 +7,8 @@
 #include <stdio.h>
 
 int yylex(void);
- void yyerror(program_t*, char const*);
+void yyerror(program_t*, char const*);
+extern int yylineno;
 
 static void append_constant(program_t *prog, constant_t *c) {
     c->next = prog->constanttbl;
@@ -21,6 +22,7 @@ static void append_device(program_t *prog, device_t *d) {
 
 void append_statement(program_t *p, statement_t *stmt) {
     stmt->next = NULL;
+    stmt->lineno = yylineno - 1;  // By the time we get here, we've moved on already
 
     if (!p->head) {
         p->head = p->tail = stmt;
