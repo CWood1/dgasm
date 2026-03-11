@@ -90,7 +90,7 @@ void append_directive(program_t *p, directive_t* dir) {
     expr_list_t* expr_list;
 }
 			
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV DW PACKED
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV DW PACKED HASH
 			
 %type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
@@ -379,13 +379,22 @@ operand_list:
 opcode_stmt:
 		IDENTIFIER EOL {
 		    $$ = malloc(sizeof(opcode_t));
+		    $$->ignoreresult = 0;
 		    $$->mnemonic = strdup($1);
 		    $$->operands = NULL;
 		}
 	| 	IDENTIFIER operand_list EOL {
 		    $$ = malloc(sizeof(opcode_t));
+		    $$->ignoreresult = 0;
 		    $$->mnemonic = strdup($1);
 		    $$->operands = $2;
 		}
+	|	 IDENTIFIER HASH operand_list EOL {
+		    $$ = malloc(sizeof(opcode_t));
+		    $$->ignoreresult = 1;
+		    $$->mnemonic = strdup($1);
+		    $$->operands = $3;
+		}
+		    
 ;
 %%

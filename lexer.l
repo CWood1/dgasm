@@ -105,6 +105,7 @@ void append_to_line(const char* text, int len) {
 "|"                          { return OR; }
 "~"                          { return NOT; }
 "^"                          { return XOR; }
+"#"                          { return HASH; }
 const                        { return CONST; }
 var                          { return VAR; }
 org                          { return ORG; }

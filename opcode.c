@@ -553,6 +553,10 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
     skip = opcode->operands->items[2]->u.skip;
   }
 
+  if (opcode->ignoreresult == 1) {
+    encoding |= 0x8;
+  }
+
   encoding |= sourceaccumulator << 13;
   encoding |= destinationaccumulator << 11;
   encoding |= skip;

@@ -113,6 +113,7 @@ typedef struct {
 typedef struct opcode {
   char* mnemonic;
   operand_list_t* operands;
+  int ignoreresult;
 } opcode_t;
 
 typedef enum {
