@@ -90,7 +90,7 @@ void append_directive(program_t *p, directive_t* dir) {
     expr_list_t* expr_list;
 }
 			
-%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV DW
+%token OPEN_SQUARE CLOSE_SQUARE COMMA AT DOT PLUS MINUS MULTIPLY DIVIDE AND OR NOT XOR COLON SECTION CONST VAR ORG DEV DOLLAR SKP SZC SNC SZR SNR SEZ SBN EOL IDENTIFIER STRING INTEGER LPAREN RPAREN EQUALS RESV DW PACKED
 			
 %type	<str>	IDENTIFIER STRING label_stmt
 %type	<number>	INTEGER
@@ -182,6 +182,12 @@ var_stmt:
 	|	VAR IDENTIFIER EQUALS STRING EOL {
 		    $$ = malloc(sizeof(variable_t));
 		    $$->type = VARIABLE_STRING;
+		    $$->name = strdup($2);
+		    $$->value = (variable_value_t){ .str = $4 };
+		}
+	|	VAR IDENTIFIER EQUALS STRING PACKED EOL {
+		    $$ = malloc(sizeof(variable_t));
+		    $$->type = VARIABLE_PACKED_STRING;
 		    $$->name = strdup($2);
 		    $$->value = (variable_value_t){ .str = $4 };
 		}

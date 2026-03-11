@@ -50,6 +50,7 @@ typedef struct constant_t {
 
 typedef enum {
   VARIABLE_STRING,
+  VARIABLE_PACKED_STRING,
   VARIABLE_NUMBER,
   VARIABLE_RESV,
 } variable_type_t;

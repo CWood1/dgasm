@@ -377,7 +377,9 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   (*buffer)[offset] = encoding;
 }
 
-void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
+
   uint16_t encoding = instruction->base_encoding;
   uint16_t x = 0;
 
@@ -387,11 +389,11 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
     x = eval(opcode->operands->items[0]->u.expr, symbols) << 8;
 
     if (x > 0x300) {
-      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, x);
+      report_error(opcode_stmt, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->mnemonic, x);
       exit(1);
     }
   } else {
-    printf("Instruction %s requires 1 or 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    report_error(opcode_stmt, "Instruction %s requires 1 or 2 operands, found %d", opcode->mnemonic, opcode->operands->count);
   }
 
   uint16_t displacement = 0;
@@ -402,6 +404,11 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
     displacement = eval(opcode->operands->items[1]->u.expr, symbols);
   }
   if (x == 0x100) {
+    if ((int16_t) displacement - (int16_t)offset < -0100000) {
+      report_error(opcode_stmt, "Instruction %s - address out of range. Got 0%6o, should be -0100000 - 077777", opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
+    } else if (displacement - offset > 077777) {
+      report_error(opcode_stmt, "Instruction %s - address out of range. Got 0%6o, should be -0100000 - 077777", opcode->mnemonic, displacement - offset);
+    }
     displacement -= (offset + 1);
   }
 
@@ -632,7 +639,7 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     encode_flow_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDFLOW:
-    encode_extendedflow_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_extendedflow_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_IO:
     encode_io_instruction(buffer, offset, instruction, opcode, symbols);

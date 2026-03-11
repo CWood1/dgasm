@@ -48,6 +48,19 @@ offset_t* pass1(program_t* prog) {
       case VARIABLE_STRING:
 	current_address += strlen(current_statement->variable->value.str) + 1;
 	break;
+      case VARIABLE_PACKED_STRING: {
+	const char *str = current_statement->variable->value.str;
+	int len = strlen(str) + 1;
+
+	int word_index = 0;
+
+	for (int i = 0; i < len; i += 2) {
+	  word_index++;
+	}
+
+	current_address += word_index;
+	break;
+      }
       case VARIABLE_NUMBER:
 	current_address += 1;
 	break;
@@ -117,12 +130,34 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
 
       switch (stmt->variable->type) {
       case VARIABLE_STRING:
-	for(int c = 0; stmt->variable->value.str[c] += 0; c++) {
+	for(int c = 0; stmt->variable->value.str[c] != 0; c++) {
 	  buffer[current_addr + c] = stmt->variable->value.str[c];
 	}
 	buffer[current_addr + strlen(stmt->variable->value.str) + 1] = 0;
 	size = strlen(stmt->variable->value.str) + 1;
 	break;
+      case VARIABLE_PACKED_STRING: {
+	const char *str = stmt->variable->value.str;
+	int len = strlen(str) + 1;
+
+	int word_index = 0;
+
+	for (int i = 0; i < len; i += 2) {
+
+	  uint16_t word = ((uint16_t)str[i]) << 8;
+
+	  if (i + 1 < len)
+            word |= (uint8_t)str[i + 1];
+	  else
+            word |= 0;
+
+	  buffer[current_addr + word_index] = word;
+	  word_index++;
+	}
+
+	size = word_index;
+	break;
+      }
       case VARIABLE_NUMBER:
 	buffer[current_addr] = eval(stmt->variable->value.number, symbols);
 	size = 1;

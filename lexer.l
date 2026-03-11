@@ -112,6 +112,7 @@ dev                          { return DEV; }
 section                      { return SECTION; }
 resv                         { return RESV; }
 dw                           { return DW; }
+packed                       { return PACKED; }
 "$"                          { return DOLLAR; }
 SKP                          { return SKP; }
 SZC                          { return SZC; }
