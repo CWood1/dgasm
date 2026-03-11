@@ -50,6 +50,7 @@ instruction_t instruction_tbl[] = {
   { "ISZ",       1,     0b0001000000000000, ENCODING_FLOW },
   { "DSZ",       1,     0b0001100000000000, ENCODING_FLOW },
 
+  { "EJMP",      2,     0b1000010000111000, ENCODING_EXTENDEDFLOW },
   { "EJSR",      2,     0b1000110000111000, ENCODING_EXTENDEDFLOW },
 
   { "ADC",       1,     0b1000010000000000, ENCODING_ALU },
