@@ -297,6 +297,11 @@ instruction_t instruction_tbl[] = {
   { "FNOM",      1,     0b1000011000101000, ENCODING_ONEACC },
   { "FRH",       1,     0b1010011000101000, ENCODING_ONEACC },
   { "FSCAL",     1,     0b1000011001101000, ENCODING_ONEACC },
+
+  { "ADDI",      2,     0b1110011111111000, ENCODING_EXTENDEDIMMEDIATE },
+  { "ANDI",      2,     0b1100011111111000, ENCODING_EXTENDEDIMMEDIATE },
+  { "IORI",      2,     0b1000011111111000, ENCODING_EXTENDEDIMMEDIATE },
+  { "XORI",      2,     0b1010011111111000, ENCODING_EXTENDEDIMMEDIATE },
 };
 
 instruction_t find_instruction(char* opcode) {
@@ -654,6 +659,28 @@ void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   (*buffer)[offset] = encoding;
 }
 
+void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
+  uint16_t encoding = instruction->base_encoding;
+
+
+  if (opcode->operands->count != 2) {
+    report_error(opcode_stmt, "Syntax error: Requires 2 operands, found %d", opcode->mnemonic, opcode->operands->count);
+  }
+
+  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
+  if (accumulator > 0x2000) {
+    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.");
+    exit(1);
+  }
+
+  uint16_t immediate = eval(opcode->operands->items[1]->u.expr, symbols, offset);
+
+  encoding |= accumulator;
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = immediate;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t* instruction = NULL;
@@ -709,6 +736,9 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     break;
   case ENCODING_ONEACC:
     encode_oneacc_instruction(buffer, offset, instruction, opcode, symbols);
+    break;
+  case ENCODING_EXTENDEDIMMEDIATE:
+    encode_extended_immediate_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   default:
     printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);
