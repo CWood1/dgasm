@@ -26,10 +26,10 @@ $ make
 
 ---
 
-## Usage (Planned)
+## Usage
 
 ```sh
-dgasm -t nova4 -o output.bin input.asm
+dgasm -t nova4 -o output.bin -f octal input.asm
 ```
 
 ---
@@ -42,7 +42,7 @@ dgasm -t nova4 -o output.bin input.asm
 
 ---
 
-## Supported Architectures (Planned)
+## Supported Architectures
 
 The following base architectures are planned. This list may grow in the future.
 
@@ -54,7 +54,7 @@ The following base architectures are planned. This list may grow in the future.
 ---
 
 ## Important Features
-### Address space layout
+### Address space layout (Planned for v2)
 
 Data General machines have requirements for variable emplacement, that makes programming directly challenging:
 
@@ -75,7 +75,7 @@ will fail, and the programmer may have to define things by hand.
 
 ## Current status
 
-Proof of concept and project inception. Nothing exists yet really.
+Assembler works. Currently productionising for v1.
 
 ---
 
@@ -98,23 +98,23 @@ Instruction encoding is table driven, to facilitate easy extension of the assemb
 ---
 
 ## Roadmap
+### Roadmap to v1
+* Add a warning, for when a long instruction follows a skip, as this is invalid.
+* Add an include directive.
+* Go through available instructions for Nova 1, 3, and 4 CPUs, and confirm the table is correct.
+* Documentation: inline usage (-h), manual/wiki, man page.
+* Run through Valgrind, fix any memory issues that are highlighted.
+* Ramp up the warning levels from GCC, and fix any warnings.
+* Package for easy install.
 
-Short term:
-
-* Instruction encoding for core NOVA instructions, and (some) Eclipse S/140 instructions
-* Validity checking (test output on actual hardware and simh)
+### Roadmap to v2
+* Add further Eclipse instruction sets.
+* Add support for WCS via encoding, rather than using constants
 * Address space layout
+* Optional macro assembler mode in support of ASL
 
-Medium term:
-
-* Full support of architectures planned
-* Multi-file support using imports
-* Full macro processor
-* Conditional preprocessing
-
-Long term:
-
-* Support for Data General OSes - RDOS, AOS, possibly AOS/VS
+### Roadmap to v3
+* Support for Data General OS binary format - RDOS, AOS, possibly AOS/VS
 
 ---
 
