@@ -4,7 +4,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 instruction_t instruction_tbl[] = {
   // Opcode      Size   Base encoding       Encoding type
@@ -304,7 +303,146 @@ instruction_t instruction_tbl[] = {
   { "XORI",      2,     0b1010011111111000, ENCODING_EXTENDEDIMMEDIATE },
 };
 
-instruction_t find_instruction(char* opcode) {
+void validate_explicit_argument_count(statement_t* opcode_stmt, int expected) {
+  if (opcode_stmt->opcode->operands == NULL && expected == 0) {
+    return;
+  }
+
+  if (opcode_stmt->opcode->operands == NULL) {
+    report_error(opcode_stmt, "Syntax error: Requires %d arguments, got none", expected);
+    exit(1);
+  }
+
+  if (opcode_stmt->opcode->operands->count != expected) {
+    report_error(opcode_stmt, "Syntax error: Requires %d arguments, got %d", expected, opcode_stmt->opcode->operands->count);
+    exit(1);
+  }
+}
+
+int validate_ranged_argument_count(statement_t* opcode_stmt, int lower, int upper) {
+  if (opcode_stmt->opcode->operands == NULL && lower == 0) {
+    return 0;
+  }
+
+  if (opcode_stmt->opcode->operands == NULL) {
+    report_error(opcode_stmt, "Syntax error: Requires between %d and %d arguments, got none", lower, upper);
+    exit(1);
+  }
+
+  if (opcode_stmt->opcode->operands->count < lower) {
+    report_error(opcode_stmt, "Syntax error: Requires between %d and %d arguments, got %d", lower, upper, opcode_stmt->opcode->operands->count);
+    exit(1);
+  }
+
+  if (opcode_stmt->opcode->operands->count > upper) {
+    report_error(opcode_stmt, "Syntax error: Requires between %d and %d arguments, got %d", lower, upper, opcode_stmt->opcode->operands->count);
+    exit(1);
+  }
+
+  return opcode_stmt->opcode->operands->count;
+}
+
+uint16_t get_device_number(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requries a device number");
+    exit(1);
+  }
+  uint16_t device = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (device > 077) {
+    report_error(opcode_stmt, "Requires a device. Device 0%o is out of bounds", device);
+    exit(1);
+  }
+
+  return device;
+}
+
+uint16_t get_accumulator(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requries an accumulator");
+    exit(1);
+  }
+  uint16_t acc = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (acc > 3) {
+    report_error(opcode_stmt, "Requires an accumulator. Accumulator 0%o is out of bounds", acc);
+    exit(1);
+  }
+
+  return acc;
+}
+
+uint16_t get_addressing_mode(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requires an index");
+  }
+  uint16_t x = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (x > 3) {
+    report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d", x);
+    exit(1);
+  }
+}
+
+uint16_t get_short_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, int index) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR && opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_INDIRECT) {
+    report_error(opcode_stmt, "Syntax error: Requires a displacement");
+  }
+  uint16_t displacement = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (index == 1) {
+    displacement -= offset;
+  }
+
+  if (displacement & 0xFF00 != 0 && displacement & 0xFF80 != 0xFF80) {
+    report_error(opcode_stmt, "Address out of range. Got %d, should be -128 - 127", (int16_t)displacement);
+  }
+
+  displacement &= 0xFF;
+
+  if (opcode_stmt->opcode->operands->items[operand]->kind == OPERAND_INDIRECT) {
+    displacement |= 0x400;
+  }
+
+  return displacement;
+}
+
+uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, int index) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR && opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_INDIRECT) {
+    report_error(opcode_stmt, "Syntax error: Requires a displacement");
+  }
+  uint16_t displacement = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (index == 1) {
+    displacement -= (offset + 1);
+  }
+
+  if (displacement & 0x8000 != 0 && displacement & 0xC000 != 0xC000) {
+    report_error(opcode_stmt, "Address out of range. Got %d, should be -0100000 - 077777", (int16_t)displacement);
+  }
+
+  displacement &= 0x7FFF;
+
+  if (opcode_stmt->opcode->operands->items[operand]->kind == OPERAND_INDIRECT) {
+    displacement |= 0x8000;
+  }
+
+  return displacement;
+}
+
+uint16_t get_long_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requires an immediate");
+  }
+  return eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+}
+
+instruction_t find_instruction(statement_t* stmt) {
+  if (stmt->type != STMT_OPCODE) {
+    report_error(stmt, "Attempted to decode opcode on statement that isn't an opcode");
+  }
+
+  char* opcode = stmt->opcode->mnemonic;
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
 
   for (int cur = 0; cur < instruction_count; cur++) {
@@ -313,146 +451,56 @@ instruction_t find_instruction(char* opcode) {
     }
   }
 
-  printf("Instruction %s does not exist\n", opcode);
+  report_error(stmt, "Syntax error: unrecognised instruction");
   exit(1);
 }
 
-void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands->count != 1) {
-    printf("Instruction %s requires 1 operand, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
-  if (opcode->operands->items[0]->kind != OPERAND_EXPR) {
-    printf("Instruction %s requries a device number.\n", opcode->mnemonic);
-    exit(1);
-  }
-
-  uint16_t device = eval(opcode->operands->items[0]->u.expr, symbols, offset);
-
-  if (device > 077) {
-    printf("Instruction %s requires a device. Device 0%o is out of bounds.\n", opcode->mnemonic, device);
-    exit(1);
-  }
+  validate_explicit_argument_count(opcode_stmt, 1);
+  uint16_t device = get_device_number(opcode_stmt, symbols, 0, offset);
 
   encoding |= device;
   (*buffer)[offset] = encoding;
 }
 
-void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands->count != 2) {
-    printf("Instruction %s requires 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
-  if (opcode->operands->items[1]->kind != OPERAND_EXPR) {
-    printf("Instruction %s requries a device number.\n", opcode->mnemonic);
-    exit(1);
-  }
+  validate_explicit_argument_count(opcode_stmt, 2);
 
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
-  if (accumulator > 0x2000) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
-  uint16_t device = eval(opcode->operands->items[1]->u.expr, symbols, offset);
-
-  if (device > 077) {
-    printf("Instruction %s requires a device. Device 0%o is out of bounds.\n", opcode->mnemonic, device);
-    exit(1);
-  }
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
+  uint16_t device = get_device_number(opcode_stmt, symbols, 1, offset);
 
   encoding |= device;
   encoding |= accumulator;
   (*buffer)[offset] = encoding;
 }
 
-void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode, symboltbl_t* symbols) {
+void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
-  uint16_t x = 0;
+  int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
 
-  if (opcode->opcode->operands->count == 1) {
-    x = 0x100;
-  } else if (opcode->opcode->operands->count == 2) {
-    x = eval(opcode->opcode->operands->items[1]->u.expr, symbols, offset) << 8;
+  uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
+  uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 0, offset, index);
 
-    if (x > 0x300) {
-      report_error(opcode, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->opcode->mnemonic, x);
-      exit(1);
-    }
-  } else {
-    report_error(opcode, "Instruction %s requires 1 or 2 operands, found %d", opcode->opcode->mnemonic, opcode->opcode->operands->count);
-  }
-
-  uint16_t displacement = 0;
-
-  displacement = eval(opcode->opcode->operands->items[0]->u.expr, symbols, offset);
-  if (x == 0x100) {
-    if ((int16_t)displacement - (int16_t)offset < -128) {
-      report_error(opcode, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
-    } else if (displacement - offset > 127) {
-      report_error(opcode, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->opcode->mnemonic, displacement - offset);
-    }
-    displacement -= offset;
-  }
-  displacement &= 0xFF;
-
-  if (opcode->opcode->operands->items[0]->kind == EXPR_INDIRECT) {
-    encoding |= 0x400;
-  }
-
-  encoding |= x;
+  encoding |= index << 8;
   encoding |= displacement;
   (*buffer)[offset] = encoding;
 }
 
 void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   opcode_t* opcode = opcode_stmt->opcode;
-
   uint16_t encoding = instruction->base_encoding;
-  uint16_t x = 0;
 
-  if (opcode->operands->count == 1) {
-    x = 0x100;
-  } else if (opcode->operands->count == 2) {
-    x = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 8;
+  int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
+  uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
+  uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
 
-    if (x > 0x300) {
-      report_error(opcode_stmt, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.", opcode->mnemonic, x);
-      exit(1);
-    }
-  } else {
-    report_error(opcode_stmt, "Instruction %s requires 1 or 2 operands, found %d", opcode->mnemonic, opcode->operands->count);
-  }
-
-  uint16_t displacement = 0;
-
-  if (opcode->operands->count == 1) {
-    displacement = eval(opcode->operands->items[0]->u.expr, symbols, offset);
-  } else {
-    displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
-  }
-  if (x == 0x100) {
-    if ((int16_t) displacement - (int16_t)offset < -0100000) {
-      report_error(opcode_stmt, "Instruction %s - address out of range. Got 0%6o, should be -0100000 - 077777", opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
-    } else if (displacement - offset > 077777) {
-      report_error(opcode_stmt, "Instruction %s - address out of range. Got 0%6o, should be -0100000 - 077777", opcode->mnemonic, displacement - offset);
-    }
-    displacement -= (offset + 1);
-  }
-
-  if (displacement > 0x3FFF && displacement < 0xC000) {
-    printf("Instruction %s requires 15 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
-  }
-
-  displacement &= 0x7FFF;
-  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
-    displacement |= 0x8000;
-  }
-  
-  encoding |= x;
+  encoding |= index << 8;
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = displacement;
 }
@@ -460,47 +508,13 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
 void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
-  uint16_t index = 0;
+  
+  int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
+  uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
+  uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 1, offset, index);
 
-  if (opcode->operands->count == 2) {
-    index = 0;
-  } else if (opcode->operands->count == 3) {
-    index = eval(opcode->operands->items[2]->u.expr, symbols, offset);
-
-    if (index > 3) {
-      report_error(opcode_stmt, "Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
-      exit(1);
-    }
-
-    index <<= 8;
-  } else {
-    report_error(opcode_stmt, "Instruction %s requires 2 or 3 operands, found %d", opcode->mnemonic, opcode->operands->count);
-  }
-
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
-  if (accumulator > 0x2000) {
-    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.");
-    exit(1);
-  }
-
-  uint16_t displacement = 0;
-
-  displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
-  if (index == 0x100) {
-    if ((int16_t)displacement - (int16_t)offset < -128) {
-      report_error(opcode_stmt, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->mnemonic, (int16_t)displacement - (int16_t)offset);
-    } else if (displacement - offset > 127) {
-      report_error(opcode_stmt, "Instruction %s - address out of range. Got %d, should be -128 - 127", opcode->mnemonic, displacement - offset);
-    }
-    displacement -= offset;
-  }
-  displacement &= 0xFF;
-
-  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
-    encoding |= 0x400;
-  }
-
-  encoding |= index;
+  encoding |= index << 8;
   encoding |= accumulator;
   encoding |= displacement;
   (*buffer)[offset] = encoding;
@@ -509,83 +523,36 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
 void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
-  uint16_t index = 0;
 
-  if (opcode->operands->count == 2) {
-    index = 0;
-  } else if (opcode->operands->count == 3) {
-    index = eval(opcode->operands->items[2]->u.expr, symbols, offset);
+  int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
+  uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
+  uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
 
-    if (index > 3) {
-      report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
-      exit(1);
-    }
-
-    index <<= 8;
-  } else {
-    report_error(opcode_stmt, "Syntax error - requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
-  }
-
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
-  if (accumulator > 0x2000) {
-    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
-
-  uint16_t displacement = 0;
-
-  displacement = eval(opcode->operands->items[1]->u.expr, symbols, offset);
-  if (index == 0x100) {
-    displacement -= offset;      
-  }
-
-  if (displacement & 0x8000) {
-    report_error(opcode_stmt, "Address out of range. Requires signed 15 bit displacement. 0%o is out of bounds.\n", displacement);
-  }
-
-  if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
-    displacement |= 0x8000;
-  }
-
-  encoding |= index;
+  encoding |= index << 8;
   encoding |= accumulator;
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = displacement;
 }
 
-void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands->count < 2) {
-    printf("Instruction %s requires at least 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  } else if (opcode->operands->count > 3) {
-    printf("Instruction %s requires at most 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
+  int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
 
-  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
-  if (sourceaccumulator > 3) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
-  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols, offset);  
-  if (destinationaccumulator > 3) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
-
+  uint16_t sourceaccumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
+  uint16_t destinationaccumulator = get_accumulator(opcode_stmt, symbols, 1, offset);
   uint16_t skip = 0;
-  if (opcode->operands->count == 3) {
-    if (opcode->operands->items[2]->kind != OPERAND_SKIP) {
-      printf("Final parameter for an ALU instruction must be a skip.\n");
+  if (argc == 3) {
+    if (opcode_stmt->opcode->operands->items[2]->kind != OPERAND_SKIP) {
+      report_error(opcode_stmt, "Syntax error: Final parameter must be a skip");
       exit(1);
     }
 
-    skip = opcode->operands->items[2]->u.skip;
+    skip = opcode_stmt->opcode->operands->items[2]->u.skip;
   }
 
-  if (opcode->ignoreresult == 1) {
+  if (opcode_stmt->opcode->ignoreresult == 1) {
     encoding |= 0x8;
   }
 
@@ -595,86 +562,44 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
   (*buffer)[offset] = encoding;
 }
 
-void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands == NULL) {
-    printf("Instruction %s requires 1 operand, found 0\n", opcode->mnemonic);
-    exit(1);
-  }
-  if (opcode->operands->count != 1) {
-    printf("Instruction %s requires 1 operand, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
-  if (opcode->operands->items[0]->kind != OPERAND_EXPR) {
-    printf("Instruction %s requries a number.\n", opcode->mnemonic);
-    exit(1);
-  }
-
-  uint16_t immediate = eval(opcode->operands->items[0]->u.expr, symbols, offset);
+  validate_explicit_argument_count(opcode_stmt, 1);
+  uint16_t immediate = get_long_imm(opcode_stmt, symbols, 0, offset);
 
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = immediate;
 }
 
-void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands->count != 2) {
-    printf("Instruction %s requires 2 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
-
-  uint16_t sourceaccumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
-  if (sourceaccumulator > 3) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
-  uint16_t destinationaccumulator = eval(opcode->operands->items[1]->u.expr, symbols, offset);  
-  if (destinationaccumulator > 3) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
+  validate_explicit_argument_count(opcode_stmt, 2);
+  uint16_t sourceaccumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
+  uint16_t destinationaccumulator = get_accumulator(opcode_stmt, symbols, 1, offset);
 
   encoding |= sourceaccumulator << 13;
   encoding |= destinationaccumulator << 11;
   (*buffer)[offset] = encoding;
 }
 
-void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
   uint16_t encoding = instruction->base_encoding;
 
-  if (opcode->operands->count != 1) {
-    printf("Instruction %s requires 1 operand, found %d\n", opcode->mnemonic, opcode->operands->count);
-    exit(1);
-  }
-
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset);
-  if (accumulator > 3) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
-    exit(1);
-  }
+  validate_explicit_argument_count(opcode_stmt, 1);
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
 
   encoding |= accumulator << 11;
   (*buffer)[offset] = encoding;
 }
 
 void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
-
-  if (opcode->operands->count != 2) {
-    report_error(opcode_stmt, "Syntax error: Requires 2 operands, found %d", opcode->mnemonic, opcode->operands->count);
-  }
-
-  uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
-  if (accumulator > 0x2000) {
-    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.");
-    exit(1);
-  }
-
-  uint16_t immediate = eval(opcode->operands->items[1]->u.expr, symbols, offset);
+  validate_explicit_argument_count(opcode_stmt, 2);
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
+  uint16_t immediate = get_long_imm(opcode_stmt, symbols, 1, offset);
 
   encoding |= accumulator;
   (*buffer)[offset] = encoding;
@@ -683,67 +608,51 @@ void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instru
 
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
-  instruction_t* instruction = NULL;
-
-  if (opcode_stmt->type != STMT_OPCODE) {
-    fprintf(stderr, "Attempted to encode instruction on a not instruction statement. This is a bug in the assembler.");
-    exit(1);
-  }
-
+  instruction_t instruction = find_instruction(opcode_stmt);
   opcode_t* opcode = opcode_stmt->opcode;
 
-  for (int cur = 0; cur < instruction_count; cur++) {
-    if (strcmp(opcode->mnemonic, instruction_tbl[cur].opcode) == 0) {
-      instruction = &instruction_tbl[cur];
-    }
-  }
-
-  if (instruction == NULL) {
-    printf("Instruction %s does not exist\n", opcode->mnemonic);
-    exit(1);
-  }
-
-  switch (instruction->encoding_type) {
+  switch (instruction.encoding_type) {
   case ENCODING_CONSTANT:
-    (*buffer)[offset] = instruction->base_encoding;
+    validate_explicit_argument_count(opcode_stmt, 0);
+    (*buffer)[offset] = instruction.base_encoding;
     break;
   case ENCODING_IONOXFER:
-    encode_ionoxfer_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_ionoxfer_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_FLOW:
-    encode_flow_instruction(buffer, offset, instruction, opcode_stmt, symbols);
+    encode_flow_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDFLOW:
-    encode_extendedflow_instruction(buffer, offset, instruction, opcode_stmt, symbols);
+    encode_extendedflow_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_IO:
-    encode_io_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_io_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_LOAD:
-    encode_load_instruction(buffer, offset, instruction, opcode_stmt, symbols);
+    encode_load_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDLOAD:
-    encode_extendedload_instruction(buffer, offset, instruction, opcode_stmt, symbols);
+    encode_extendedload_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_ALU:
-    encode_alu_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_alu_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_SAVE:
-    encode_save_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_save_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_TWOACC:
-    encode_twoacc_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_twoacc_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_ONEACC:
-    encode_oneacc_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_oneacc_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDIMMEDIATE:
-    encode_extended_immediate_instruction(buffer, offset, instruction, opcode_stmt, symbols);
+    encode_extended_immediate_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   default:
-    printf("Attempted to encode an instruction of a type not yet supported: %d.\n", instruction->encoding_type);
+    report_error(opcode_stmt, "Attempted to encode an instruction of a type not yet supported: %d.\n", instruction.encoding_type);
     exit(1);
   }
 
-  return instruction->size;
+  return instruction.size;
 }

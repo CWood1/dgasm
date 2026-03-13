@@ -22,7 +22,7 @@ offset_t* pass1(program_t* prog) {
     switch (current_statement->type) {
     case STMT_OPCODE:
       // Instructions are easy - simply add the encoding size of the instruction to the current address
-      instruction_t inst = find_instruction(current_statement->opcode->mnemonic);
+      instruction_t inst = find_instruction(current_statement);
       current_address += inst.size;
       break;
 
