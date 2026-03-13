@@ -199,6 +199,8 @@ instruction_t instruction_tbl[] = {
   { "ELEF",      2,     0b1110010000111000, ENCODING_EXTENDEDLOAD },
   { "ESTA",      2,     0b1100010000111000, ENCODING_EXTENDEDLOAD },
   { "ESTB",      2,     0b1010010001111000, ENCODING_EXTENDEDLOAD },
+  { "DSPA",      2,     0b1100010001111000, ENCODING_EXTENDEDLOAD },
+  { "ELDB",      2,     0b1000010001111000, ENCODING_EXTENDEDLOAD },
 
   { "LMP",       1,     0b1001011100001000, ENCODING_CONSTANT },
   { "HALT",      1,     0b0110011000111111, ENCODING_CONSTANT },
@@ -270,9 +272,31 @@ instruction_t instruction_tbl[] = {
   { "SZBO",      1,     0b1000000110010000, ENCODING_TWOACC },
   { "XCH",       1,     0b1000000111001000, ENCODING_TWOACC },
 
+  { "FAD",       1,     0b1000000001101000, ENCODING_TWOACC },
+  { "FAS",       1,     0b1000000000101000, ENCODING_TWOACC },
+  { "FCMP",      1,     0b1000011100101000, ENCODING_TWOACC },
+  { "FDD",       1,     0b1000000111101000, ENCODING_TWOACC },
+  { "FDS",       1,     0b1000000110101000, ENCODING_TWOACC },
+  { "FFAS",      1,     0b1000010110101000, ENCODING_TWOACC },
+  { "FLAS",      1,     0b1000010100101000, ENCODING_TWOACC },
+  { "FMD",       1,     0b1000000101101000, ENCODING_TWOACC },
+  { "FMOV",      1,     0b1000011101101000, ENCODING_TWOACC },
+  { "FMS",       1,     0b1000000100101000, ENCODING_TWOACC },
+  { "FSD",       1,     0b1000000011101000, ENCODING_TWOACC },
+  { "FSS",       1,     0b1000000010101000, ENCODING_TWOACC },
+
   { "MSP",       1,     0b1000011011111000, ENCODING_ONEACC },
   { "HLV",       1,     0b1100011011111000, ENCODING_ONEACC },
   { "XCT",       1,     0b1010011011111000, ENCODING_ONEACC },
+
+  { "FAB",       1,     0b1100011000101000, ENCODING_ONEACC },
+  { "FEXP",      1,     0b1010011001101000, ENCODING_ONEACC },
+  { "FHLV",      1,     0b1110011001101000, ENCODING_ONEACC },
+  { "FINT",      1,     0b1100011001101000, ENCODING_ONEACC },
+  { "FNEG",      1,     0b1110011000101000, ENCODING_ONEACC },
+  { "FNOM",      1,     0b1000011000101000, ENCODING_ONEACC },
+  { "FRH",       1,     0b1010011000101000, ENCODING_ONEACC },
+  { "FSCAL",     1,     0b1000011001101000, ENCODING_ONEACC },
 };
 
 instruction_t find_instruction(char* opcode) {
@@ -477,7 +501,8 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
   (*buffer)[offset] = encoding;
 }
 
-void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, opcode_t* opcode, symboltbl_t* symbols) {
+void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
   uint16_t index = 0;
 
@@ -487,18 +512,18 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
     index = eval(opcode->operands->items[2]->u.expr, symbols, offset);
 
     if (index > 3) {
-      printf("Invalid mode for %s. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
+      report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d.\n", opcode->mnemonic, index);
       exit(1);
     }
 
     index <<= 8;
   } else {
-    printf("Instruction %s requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
+    report_error(opcode_stmt, "Syntax error - requires 2 or 3 operands, found %d\n", opcode->mnemonic, opcode->operands->count);
   }
 
   uint16_t accumulator = eval(opcode->operands->items[0]->u.expr, symbols, offset) << 11;
   if (accumulator > 0x2000) {
-    printf("Accumulator out of range. Should be 0, 1, 2, or 3.\n");
+    report_error(opcode_stmt, "Accumulator out of range. Should be 0, 1, 2, or 3.\n");
     exit(1);
   }
 
@@ -509,8 +534,8 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
     displacement -= offset;      
   }
 
-  if (displacement > 0x3FFF && displacement < 0xC000) {
-    printf("Instruction %s requires 15 bit displacement. 0%o is out of bounds.\n", opcode->mnemonic, displacement);
+  if (displacement & 0x8000) {
+    report_error(opcode_stmt, "Address out of range. Requires signed 15 bit displacement. 0%o is out of bounds.\n", displacement);
   }
 
   if (opcode->operands->items[0]->kind == EXPR_INDIRECT) {
@@ -671,7 +696,7 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     encode_load_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_EXTENDEDLOAD:
-    encode_extendedload_instruction(buffer, offset, instruction, opcode, symbols);
+    encode_extendedload_instruction(buffer, offset, instruction, opcode_stmt, symbols);
     break;
   case ENCODING_ALU:
     encode_alu_instruction(buffer, offset, instruction, opcode, symbols);
