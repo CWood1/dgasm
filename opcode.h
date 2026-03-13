@@ -5,6 +5,11 @@
 #include "symbol_tbl.h"
 #include <stdint.h>
 
+#define CPU_NOVA1        0x01
+#define CPU_NOVA3        0x02
+#define CPU_NOVA4        0x03
+#define CPU_ECLIPSE_S140 0x04
+
 typedef enum {
   ENCODING_IO,
   ENCODING_IONOXFER,
@@ -32,9 +37,11 @@ typedef struct {
 
   uint16_t base_encoding;
   instruction_encoding_t encoding_type;
+
+  int cpu_types;
 } instruction_t;
 
 instruction_t find_instruction(statement_t* stmt);
-int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols);
+int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols, int cpu);
 
 #endif

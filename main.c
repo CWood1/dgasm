@@ -3,6 +3,7 @@
 #include "assembler.h"
 #include "symbol_tbl.h"
 #include "error.h"
+#include "opcode.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,7 +76,7 @@ int write_octal_eclipse(FILE *stream, const output_t *out) {
 void usage() {
   printf("Usage:\n");
   printf("dgasm -t <cpu> -o <output> -f <format> input.s\n\n");
-  printf("CPU options:\n\tnova1\n\tnova3\n\tnova4\n\teclipse140\n\n");
+  printf("CPU options:\n\tnova1\n\tnova3\n\tnova4\n\teclipse_s140\n\n");
   printf("Output format options:\n\tbinary\n\toctal\n\teclipse\n\tsimh");
 }
 
@@ -84,9 +85,11 @@ int main(int argc, char** argv) {
   char* outputfn = NULL;
   char* outputformat = "bin";
 
+  int cpu = CPU_NOVA1;
+
   int opt;
 
-  while((opt = getopt(argc, argv, "o:f:")) != -1) {
+  while((opt = getopt(argc, argv, "o:f:t:")) != -1) {
     switch(opt) {
     case 'o':
       outputfn = optarg;
@@ -104,6 +107,17 @@ int main(int argc, char** argv) {
 		optarg);
 	return 1;
       }
+      break;
+
+    case 't':
+      if (strcmp(optarg, "nova1") == 0)
+	cpu = CPU_NOVA1;
+      if (strcmp(optarg, "nova3") == 0)
+	cpu = CPU_NOVA3;
+      if (strcmp(optarg, "nova4") == 0)
+	cpu = CPU_NOVA4;
+      if (strcmp(optarg, "eclipse_s140") == 0)
+	cpu = CPU_ECLIPSE_S140;
       break;
 
     default:
@@ -143,7 +157,7 @@ int main(int argc, char** argv) {
 
   offset_t* offsets = pass1(prog);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
-  output_t output = pass2(prog, symbols);
+  output_t output = pass2(prog, symbols, cpu);
 
   if (get_err_count()) {
     return 1;

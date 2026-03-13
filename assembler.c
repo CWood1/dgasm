@@ -89,7 +89,7 @@ offset_t* pass1(program_t* prog) {
   return head;
 }
 
-output_t pass2(program_t* prog, symboltbl_t* symbols) {
+output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
   output_t out = {0};
   uint16_t* buffer = calloc(MAX_MEMORY_WORDS, sizeof(uint16_t));
   if (buffer == NULL) {
@@ -113,7 +113,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols) {
       break;
 
     case STMT_OPCODE: {
-      int size = encode_instruction(&buffer, current_addr, stmt, symbols);
+      int size = encode_instruction(&buffer, current_addr, stmt, symbols, cpu);
 
       if (current_addr < min_addr)
 	min_addr = current_addr;
