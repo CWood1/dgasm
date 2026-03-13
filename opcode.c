@@ -308,6 +308,28 @@ instruction_t instruction_tbl[] = {
   { "HXL",       1,     0b1000001100001000, ENCODING_IMMEDIATE },
   { "HXR",       1,     0b1000001101001000, ENCODING_IMMEDIATE },
   { "SBI",       1,     0b1000000001001000, ENCODING_IMMEDIATE },
+
+  { "FAMD",      2,     0b1000001001101000, ENCODING_FLOATEXLOAD },
+  { "FAMS",      2,     0b1000001000101000, ENCODING_FLOATEXLOAD },
+  { "FDMD",      2,     0b1000001111101000, ENCODING_FLOATEXLOAD },
+  { "FDMS",      2,     0b1000001110101000, ENCODING_FLOATEXLOAD },
+  { "FFMD",      2,     0b1000010111101000, ENCODING_FLOATEXLOAD },
+  { "FLDD",      2,     0b1000010001101000, ENCODING_FLOATEXLOAD },
+  { "FLDS",      2,     0b1000010000101000, ENCODING_FLOATEXLOAD },
+  { "FLMD",      2,     0b1000010101101000, ENCODING_FLOATEXLOAD },
+  { "FMMD",      2,     0b1000001101101000, ENCODING_FLOATEXLOAD },
+  { "FMMS",      2,     0b1000001100101000, ENCODING_FLOATEXLOAD },
+  { "FSMD",      2,     0b1000001011101000, ENCODING_FLOATEXLOAD },
+  { "FSMS",      2,     0b1000001010101000, ENCODING_FLOATEXLOAD },
+  { "FSTD",      2,     0b1000010011101000, ENCODING_FLOATEXLOAD },
+  { "FSTS",      2,     0b1000010010101000, ENCODING_FLOATEXLOAD },
+
+  { "FLST",      2,     0b1010011011101000, ENCODING_FLOATEXLOADNOACC },
+  { "FSST",      2,     0b1000011011101000, ENCODING_FLOATEXLOADNOACC },
+
+  { "PSHJ",      2,     0b1000010010111000, ENCODING_PSHJ },
+  { "XOP",       1,     0b1000000000011000, ENCODING_XOP },
+  { "XOP1",      1,     0b1000000000111000, ENCODING_XOP1 },
 };
 
 void validate_explicit_argument_count(statement_t* opcode_stmt, int expected) {
@@ -450,6 +472,19 @@ uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int opera
   }
 
   return imm - 1;
+}
+
+uint16_t get_ranged_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, uint16_t low, uint16_t high) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requires an immediate");
+  }
+  uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (imm > high || imm < low) {
+    report_error(opcode_stmt, "Immediate out of range. Must be %d - %d, got %d", imm, low, high);
+  }
+
+  return imm;
 }
 
 instruction_t find_instruction(statement_t* stmt) {
@@ -633,6 +668,34 @@ void encode_immediate_instruction(uint16_t** buffer, int offset, instruction_t* 
   (*buffer)[offset] = encoding;
 }
 
+void encode_floatexload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
+  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t acc = get_accumulator(opcode_stmt, symbols, 0, offset);
+  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+
+  encoding |= acc << 11;
+  encoding |= index << 13;
+
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = disp;
+}
+
+void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
+  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+
+  encoding |= index << 11;
+
+  (*buffer)[offset] = encoding;
+  (*buffer)[offset + 1] = disp;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t instruction = find_instruction(opcode_stmt);
@@ -679,6 +742,42 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
   case ENCODING_IMMEDIATE:
     encode_immediate_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
+  case ENCODING_FLOATEXLOAD:
+    encode_floatexload_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
+    break;
+  case ENCODING_FLOATEXLOADNOACC:
+    encode_floatexloadnoacc_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
+    break;
+  case ENCODING_PSHJ: {
+    int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
+    uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
+    uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
+
+    (*buffer)[offset] = instruction.base_encoding | (index << 8);
+    (*buffer)[offset + 1] = displacement;
+    break;
+  }
+
+  case ENCODING_XOP: {
+    validate_explicit_argument_count(opcode_stmt, 3);
+    uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
+    uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
+    uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x1F) << 6;
+
+    (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
+    break;
+  }
+
+  case ENCODING_XOP1: {
+    validate_explicit_argument_count(opcode_stmt, 3);
+    uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
+    uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
+    uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x0F) << 6;
+
+    (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
+    break;
+  }
+    
   default:
     report_error(opcode_stmt, "Attempted to encode an instruction of a type not yet supported: %d.\n", instruction.encoding_type);
     exit(1);
