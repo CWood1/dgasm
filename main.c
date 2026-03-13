@@ -60,12 +60,14 @@ int write_octal_eclipse(FILE *stream, const output_t *out) {
 
   uint16_t addr = out->start_addr;
 
-  printf("K %o/\n", addr);
+  fprintf(stream, "K %o/\n", addr);
 
   for (uint16_t i = 0; i < out->size; i++, addr++) {
     fprintf(stream, "%06o\n",
 	    out->data[i]);
   }
+
+  fprintf(stream, "K\n");
 
   return 0;
 }
