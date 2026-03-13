@@ -301,6 +301,13 @@ instruction_t instruction_tbl[] = {
   { "ANDI",      2,     0b1100011111111000, ENCODING_EXTENDEDIMMEDIATE },
   { "IORI",      2,     0b1000011111111000, ENCODING_EXTENDEDIMMEDIATE },
   { "XORI",      2,     0b1010011111111000, ENCODING_EXTENDEDIMMEDIATE },
+
+  { "ADI",       1,     0b1000000000001000, ENCODING_IMMEDIATE },
+  { "DHXL",      1,     0b1000001110001000, ENCODING_IMMEDIATE },
+  { "DHXR",      1,     0b1000001111001000, ENCODING_IMMEDIATE },
+  { "HXL",       1,     0b1000001100001000, ENCODING_IMMEDIATE },
+  { "HXR",       1,     0b1000001101001000, ENCODING_IMMEDIATE },
+  { "SBI",       1,     0b1000000001001000, ENCODING_IMMEDIATE },
 };
 
 void validate_explicit_argument_count(statement_t* opcode_stmt, int expected) {
@@ -345,13 +352,11 @@ int validate_ranged_argument_count(statement_t* opcode_stmt, int lower, int uppe
 uint16_t get_device_number(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requries a device number");
-    exit(1);
   }
   uint16_t device = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
   if (device > 077) {
     report_error(opcode_stmt, "Requires a device. Device 0%o is out of bounds", device);
-    exit(1);
   }
 
   return device;
@@ -360,13 +365,11 @@ uint16_t get_device_number(statement_t* opcode_stmt, symboltbl_t* symbols, int o
 uint16_t get_accumulator(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requries an accumulator");
-    exit(1);
   }
   uint16_t acc = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
   if (acc > 3) {
     report_error(opcode_stmt, "Requires an accumulator. Accumulator 0%o is out of bounds", acc);
-    exit(1);
   }
 
   return acc;
@@ -380,7 +383,6 @@ uint16_t get_addressing_mode(statement_t* opcode_stmt, symboltbl_t* symbols, int
 
   if (x > 3) {
     report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d", x);
-    exit(1);
   }
 }
 
@@ -435,6 +437,19 @@ uint16_t get_long_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operan
     report_error(opcode_stmt, "Syntax error: Requires an immediate");
   }
   return eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+}
+
+uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
+  if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
+    report_error(opcode_stmt, "Syntax error: Requires an immediate");
+  }
+  uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
+  if (imm > 4 || imm == 0) {
+    report_error(opcode_stmt, "Immediate out of range. Must be 1-4, got %d", imm);
+  }
+
+  return imm - 1;
 }
 
 instruction_t find_instruction(statement_t* stmt) {
@@ -606,6 +621,18 @@ void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instru
   (*buffer)[offset + 1] = immediate;
 }
 
+void encode_immediate_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
+  uint16_t encoding = instruction->base_encoding;
+
+  validate_explicit_argument_count(opcode_stmt, 2);
+  uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
+  uint16_t immediate = get_short_imm(opcode_stmt, symbols, 1, offset) << 13;
+
+  encoding |= accumulator;
+  encoding |= immediate;
+  (*buffer)[offset] = encoding;
+}
+
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t instruction = find_instruction(opcode_stmt);
@@ -648,6 +675,9 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     break;
   case ENCODING_EXTENDEDIMMEDIATE:
     encode_extended_immediate_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
+    break;
+  case ENCODING_IMMEDIATE:
+    encode_immediate_instruction(buffer, offset, &instruction, opcode_stmt, symbols);
     break;
   default:
     report_error(opcode_stmt, "Attempted to encode an instruction of a type not yet supported: %d.\n", instruction.encoding_type);

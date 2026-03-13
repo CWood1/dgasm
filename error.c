@@ -8,6 +8,7 @@
 static char **lines = NULL;
 static int line_count = 0;
 static int line_capacity = 0;
+static int err_count = 0;
 
 void source_add_line(const char *line) {
   if (line_count >= line_capacity) {
@@ -45,4 +46,10 @@ void report_error(statement_t* stmt, const char *fmt, ...) {
     if (line)
       fprintf(stderr, "  %s\n", line);
   }
+
+  err_count += 1;
+}
+
+int get_err_count() {
+  return err_count;
 }

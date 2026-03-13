@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "assembler.h"
 #include "symbol_tbl.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,6 +142,10 @@ int main(int argc, char** argv) {
   offset_t* offsets = pass1(prog);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
   output_t output = pass2(prog, symbols);
+
+  if (get_err_count()) {
+    return 1;
+  }
 
   if (strcmp(outputformat, "bin") == 0) {
     if (outputfn == NULL) {
