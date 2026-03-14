@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
   yyin = f;
   yyparse(prog);
 
-  offset_t* offsets = pass1(prog);
+  offset_t* offsets = pass1(prog, cpu);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
   output_t output = pass2(prog, symbols, cpu);
 

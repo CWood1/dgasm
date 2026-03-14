@@ -29,6 +29,8 @@ typedef enum {
   ENCODING_PSHJ,
   ENCODING_XOP,
   ENCODING_XOP1,
+  ENCODING_TRAP,
+  ENCODING_NOVA4BYTE,
 } instruction_encoding_t;
 
 typedef struct {
@@ -41,7 +43,7 @@ typedef struct {
   int cpu_types;
 } instruction_t;
 
-instruction_t find_instruction(statement_t* stmt);
+instruction_t find_instruction(statement_t* stmt, int cpu);
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols, int cpu);
 
 #endif

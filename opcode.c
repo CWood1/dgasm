@@ -194,12 +194,12 @@ instruction_t instruction_tbl[] = {
   { "LEF",       1,     0b0110000000000000, ENCODING_LOAD, CPU_ECLIPSE_S140 },
   { "STA",       1,     0b0100000000000000, ENCODING_LOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
 
-  { "ELDA",      2,     0b1010010000111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "ELEF",      2,     0b1110010000111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "ESTA",      2,     0b1100010000111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "ESTB",      2,     0b1010010001111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "DSPA",      2,     0b1100010001111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "ELDB",      2,     0b1000010001111000, ENCODING_EXTENDEDLOAD, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
+  { "ELDA",      2,     0b1010010000111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
+  { "ELEF",      2,     0b1110010000111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
+  { "ESTA",      2,     0b1100010000111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
+  { "ESTB",      2,     0b1010010001111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
+  { "DSPA",      2,     0b1100010001111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
+  { "ELDB",      2,     0b1000010001111000, ENCODING_EXTENDEDLOAD, CPU_ECLIPSE_S140 },
 
   { "LMP",       1,     0b1001011100001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
   { "HALT",      1,     0b0110011000111111, ENCODING_CONSTANT, CPU_NOVA1 | CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
@@ -296,6 +296,25 @@ instruction_t instruction_tbl[] = {
   { "FNOM",      1,     0b1000011000101000, ENCODING_ONEACC, CPU_ECLIPSE_S140 },
   { "FRH",       1,     0b1010011000101000, ENCODING_ONEACC, CPU_ECLIPSE_S140 },
   { "FSCAL",     1,     0b1000011001101000, ENCODING_ONEACC, CPU_ECLIPSE_S140 },
+
+  // Nova 3 instructions - these are all aliases to I/O instruction special encodings
+  { "PSHA",      1,     0b0110001100000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "POPA",      1,     0b0110001110000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "SAV",       1,     0b0110010100000001, ENCODING_CONSTANT, CPU_NOVA3 | CPU_NOVA4 },
+  { "MTSP",      1,     0b0110001000000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "MTFP",      1,     0b0110000000000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "MSFP",      1,     0b0110001010000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "MFFP",      1,     0b0110000010000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "RET",       1,     0b0110010110000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "TRAP",      1,     0b1000000000001000, ENCODING_TRAP, CPU_NOVA3 | CPU_NOVA4 },
+
+  // Nova 4 instructions
+  { "LDB",       1,     0b0110000100000001, ENCODING_NOVA4BYTE, CPU_NOVA4 },
+  { "STB",       1,     0b0110010000000001, ENCODING_NOVA4BYTE, CPU_NOVA4 },
+  { "MUL",       1,     0b0111011011000001, ENCODING_CONSTANT, CPU_NOVA4 },
+  { "DIV",       1,     0b0111011001000001, ENCODING_CONSTANT, CPU_NOVA4 },
+  { "MULS",      1,     0b0111111010000001, ENCODING_CONSTANT, CPU_NOVA4 },
+  { "DIVS",      1,     0b0111111000000001, ENCODING_CONSTANT, CPU_NOVA4 },
 
   { "ADDI",      2,     0b1110011111111000, ENCODING_EXTENDEDIMMEDIATE, CPU_ECLIPSE_S140 },
   { "ANDI",      2,     0b1100011111111000, ENCODING_EXTENDEDIMMEDIATE, CPU_ECLIPSE_S140 },
@@ -487,7 +506,7 @@ uint16_t get_ranged_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int oper
   return imm;
 }
 
-instruction_t find_instruction(statement_t* stmt) {
+instruction_t find_instruction(statement_t* stmt, int cpu) {
   if (stmt->type != STMT_OPCODE) {
     report_error(stmt, "Attempted to decode opcode on statement that isn't an opcode");
   }
@@ -496,7 +515,7 @@ instruction_t find_instruction(statement_t* stmt) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
 
   for (int cur = 0; cur < instruction_count; cur++) {
-    if (strcmp(opcode, instruction_tbl[cur].opcode) == 0) {
+    if (strcmp(opcode, instruction_tbl[cur].opcode) == 0 && (instruction_tbl[cur].cpu_types & cpu)) {
       return instruction_tbl[cur];
     }
   }
@@ -698,13 +717,8 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
 
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols, int cpu) {
   int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
-  instruction_t instruction = find_instruction(opcode_stmt);
+  instruction_t instruction = find_instruction(opcode_stmt, cpu);
   opcode_t* opcode = opcode_stmt->opcode;
-
-  if ((instruction.cpu_types & cpu) == 0) {
-    report_error(opcode_stmt, "Instruction not encodable for the CPU you have selected");
-    return instruction.size;
-  }
 
   switch (instruction.encoding_type) {
   case ENCODING_CONSTANT:
@@ -780,6 +794,25 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x0F) << 6;
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
+    break;
+  }
+
+  case ENCODING_TRAP: {
+    validate_explicit_argument_count(opcode_stmt, 3);
+    uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
+    uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
+    uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x7F) << 4;
+
+    (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
+    break;
+  }
+
+  case ENCODING_NOVA4BYTE: {
+    validate_explicit_argument_count(opcode_stmt, 2);
+    uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 6;
+    uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
+
+    (*buffer)[offset] = instruction.base_encoding | acs | acd;
     break;
   }
     

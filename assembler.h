@@ -19,7 +19,7 @@ typedef struct {
 
 #include "symbol_tbl.h"
 
-offset_t* pass1(program_t* prog);
+offset_t* pass1(program_t* prog, int cpu);
 output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu);
 
 #endif

@@ -10,7 +10,7 @@
 
 #define MAX_MEMORY_WORDS 65536
 
-offset_t* pass1(program_t* prog) {
+offset_t* pass1(program_t* prog, int cpu) {
   // Default to starting at 0100 - just after the zero page
   uint16_t current_address = 0100;
 
@@ -22,7 +22,7 @@ offset_t* pass1(program_t* prog) {
     switch (current_statement->type) {
     case STMT_OPCODE:
       // Instructions are easy - simply add the encoding size of the instruction to the current address
-      instruction_t inst = find_instruction(current_statement);
+      instruction_t inst = find_instruction(current_statement, cpu);
       current_address += inst.size;
       break;
 
