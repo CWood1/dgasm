@@ -49,17 +49,19 @@ int include_stack_ptr = 0;
 
 include                      BEGIN(incl);
 <incl>[ \t]*                 ;
-<incl>[^ \t\n]+              {
+<incl>\"[^ \t\n]+\"          {
                                if (include_stack_ptr >= MAX_INCLUDE_DEPTH) {
 				   fprintf(stderr, "Includes nest too deeply");
                                    exit(1);
                                }
 
                                include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
-                               yyin = fopen(yytext, "r");
+                               char* fn = strpbrk(yytext, "\"") + 1;
+                               *(strpbrk(fn, "\"")) = '\0';
+                               yyin = fopen(fn, "r");
 
                                if (!yyin) {
-                                   fprintf(stderr, "Cannot include %s - no such file", yytext);
+                                   fprintf(stderr, "Cannot include %s - no such file\n", fn);
                                    exit(1);
                                }
 
