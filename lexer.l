@@ -30,9 +30,14 @@ void append_to_line(const char* text, int len) {
     }
 }
 
+#define MAX_INCLUDE_DEPTH 10
+YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+int include_stack_ptr = 0;
+
 %}
 
 %x string
+%x incl
 %option yylineno
 
 %%
@@ -41,6 +46,26 @@ void append_to_line(const char* text, int len) {
 [ \t]                        ;
 
 \"                           { string_buf_ptr = string_buf; BEGIN(string); }
+
+include                      BEGIN(incl);
+<incl>[ \t]*                 ;
+<incl>[^ \t\n]+              {
+                               if (include_stack_ptr >= MAX_INCLUDE_DEPTH) {
+				   fprintf(stderr, "Includes nest too deeply");
+                                   exit(1);
+                               }
+
+                               include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+                               yyin = fopen(yytext, "r");
+
+                               if (!yyin) {
+                                   fprintf(stderr, "Cannot include %s - no such file", yytext);
+                                   exit(1);
+                               }
+
+                               yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
+                               BEGIN(INITIAL);
+                             }
 
 <string>\"                   { /* saw closing quote - all done */
                                BEGIN(INITIAL);
@@ -129,6 +154,15 @@ SBN                          { return SBN; }
 
 "//".*\n                     { return EOL; }
 \n                           { return EOL; }
+
+<<EOF>>                      {
+                               if (--include_stack_ptr < 0) {
+                                   yyterminate();
+                               } else {
+                                   yy_delete_buffer(YY_CURRENT_BUFFER);
+                                   yy_switch_to_buffer(include_stack[include_stack_ptr]);
+                               }
+                             }
 
 . {
     fprintf(stderr, "Unexpected character: '%s' at line %d\n", yytext, yylineno);
