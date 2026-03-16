@@ -1,4 +1,4 @@
-#include "opcode.h"
+ #include "opcode.h"
 #include "eval.h"
 #include "error.h"
 
@@ -437,7 +437,10 @@ uint16_t get_short_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, 
     displacement -= offset;
   }
 
-  if (displacement & 0xFF00 != 0 && displacement & 0xFF80 != 0xFF80) {
+  // If index is 0 (ie, zero page), the number is unsigned. Elsewise, it's signed
+  if (index == 0 && displacement & 0xFF00 != 0) {
+    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 255", (int16_t)displacement);
+  } else if (index != 0 && displacement & 0xFF00 != 0 && displacement & 0xFF80 != 0xFF80) {
     report_error(opcode_stmt, "Address out of range. Got %d, should be -128 - 127", (int16_t)displacement);
   }
 
@@ -460,8 +463,10 @@ uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, i
     displacement -= (offset + 1);
   }
 
-  if (displacement & 0x8000 != 0 && displacement & 0xC000 != 0xC000) {
-    report_error(opcode_stmt, "Address out of range. Got %d, should be -0100000 - 077777", (int16_t)displacement);
+  if (index == 0 && displacement & 0x8000 != 0) {
+    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 077777", (int16_t)displacement);
+  } else if (index != 0 && displacement & 0x8000 != 0 && displacement & 0xC000 != 0xC000) {
+    report_error(opcode_stmt, "Address out of range. Got %d, should be -040000 - 037777", (int16_t)displacement);
   }
 
   displacement &= 0x7FFF;
