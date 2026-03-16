@@ -545,7 +545,7 @@ void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruc
   uint16_t device = get_device_number(opcode_stmt, symbols, 1, offset);
 
   encoding |= device;
-  encoding |= accumulator;
+  encoding |= accumulator<<11;
   (*buffer)[offset] = encoding;
 }
 
