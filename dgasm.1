@@ -1,0 +1,46 @@
+.TH DGASM 1 "March 2026" "v1.0" "DGASM User Manual"
+.SH NAME
+dgasm \- Assembler for Data General Nova and Eclipse systems
+.SH SYNOPSIS
+.B dgasm
+[\fB\-t\fR \fIcpu\fR] [\fB\-f\fR \fIformat\fR] [\fB\-o\fR \fIoutput\fR] \fIinput.s\fR
+.SH DESCRIPTION
+.B dgasm
+is a cross-assembler designed to target vintage Data General architectures. It supports
+various CPU-specific instruction sets and generates output in several formats compatible
+with modern simulators (like SIMH) or original hardware.
+.SH OPTIONS
+.TP
+.BI \-t " cpu"
+Specify the target CPU architecture. Supported values:
+.RS
+.IP \(bu 2
+\fBnova1\fR, \fBnova3\fR, \fBnova4\fR
+.IP \(bu 2
+\fBeclipse_s140\fR
+.RE
+.TP
+.BI \-f " format"
+Set the output encoding format.
+.RS
+.IP \fBbinary\fR
+Raw machine code bytes.
+.IP \fBoctal\fR
+A text-based octal representation of the memory image.
+.IP \fBeclipse\fR
+Format to be pasted into an Eclipse's console monitor, if it has one.
+.IP \fBsimh\fR
+Format to be pasted into SIMH's monitor.
+.RE
+.TP
+.BI \-o " output"
+Specify the name of the output file. If omitted, defaults to \fBstdout\fR.
+.SH EXAMPLES
+Assemble a Nova 3 program for use in SIMH:
+.IP
+.B dgasm -t nova3 -f simh -o boot.out main.s
+.SH BUGS
+Report bugs to the project repository at:
+.I https://github.com/CWood1/dgasm
+.SH AUTHOR
+Written by Connor Wood (Venos).

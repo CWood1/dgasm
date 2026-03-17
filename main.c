@@ -74,11 +74,26 @@ int write_octal_eclipse(FILE *stream, const output_t *out) {
   return 0;
 }
 
-void usage() {
-  printf("Usage:\n");
-  printf("dgasm -t <cpu> -o <output> -f <format> input.s\n\n");
-  printf("CPU options:\n\tnova1\n\tnova3\n\tnova4\n\teclipse_s140\n\n");
-  printf("Output format options:\n\tbinary\n\toctal\n\teclipse\n\tsimh");
+void usage(const char* progname) {
+  printf("Usage: %s [options] <input.s>\n\n", progname);
+
+  printf("Options:\n");
+  printf("  -t <cpu>      Specify target CPU architecture (required).\n");
+  printf("  -o <file>     Set output filename (default: stdout)\n");
+  printf("  -f <format>   Set output format (default: binary)\n");
+  printf("  -h            Display this help message\n\n");
+
+  printf("CPU architectures (-t):\n");
+  printf("  nova1, nova3, nova4, eclipse_s140\n\n");
+
+  printf("Output formats (-f):\n");
+  printf("  binary        Raw machine code\n");
+  printf("  octal         Human-readable octal dump\n");
+  printf("  eclipse       DG Eclipse-compatible object format\n");
+  printf("  simh          SIMH-compatible loadable format\n\n");
+    
+  printf("Example:\n");
+  printf("  %s -t nova3 -f simh -o boot.out main.s\n", progname);
 }
 
 int main(int argc, char** argv) {
@@ -90,10 +105,15 @@ int main(int argc, char** argv) {
 
   int opt;
 
-  while((opt = getopt(argc, argv, "o:f:t:")) != -1) {
+  while((opt = getopt(argc, argv, "o:f:t:h")) != -1) {
     switch(opt) {
     case 'o':
       outputfn = optarg;
+      break;
+
+    case 'h':
+      usage(argv[0]);
+      return 0;
       break;
 
     case 'f':      
@@ -122,13 +142,13 @@ int main(int argc, char** argv) {
       break;
 
     default:
-      usage();
+      usage(argv[0]);
       return 1;
     }
   }
 
   if (optind >= argc) {
-    usage();
+    usage(argv[0]);
     return 1;
   }
 
@@ -137,7 +157,7 @@ int main(int argc, char** argv) {
   }
 
   if (fn == NULL) {
-    usage();
+    usage(argv[0]);
     return 1;
   }
 
@@ -172,7 +192,7 @@ int main(int argc, char** argv) {
 
   if (strcmp(outputformat, "bin") == 0) {
     if (outputfn == NULL) {
-      usage();
+      usage(argv[0]);
       return 1;
     }
 
