@@ -100,7 +100,7 @@ Instruction encoding is table driven, to facilitate easy extension of the assemb
 ## Roadmap
 ### Roadmap to v1
 * Add a warning, for when a long instruction follows a skip, as this is invalid.
-* Documentation: inline usage (-h), manual/wiki, man page.
+* Documentation: manual/wiki.
 * Package for easy install.
 
 ### Roadmap to v2
