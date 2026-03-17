@@ -22,6 +22,10 @@ void append_to_line(const char* text, int len) {
 	    free(current_line);
 	    current_line = strdup("");
 	    current_line_len = 0;
+        } else if (text[i] == 0x04) {
+	    // EOF - append the line, then free the text
+	    source_add_line(current_line ? current_line : "");
+	    free(current_line);	    
         } else {
 	    current_line = realloc(current_line, current_line_len + 2);
 	    current_line[current_line_len++] = text[i];
@@ -158,10 +162,14 @@ SBN                          { return SBN; }
 \n                           { return EOL; }
 
 <<EOF>>                      {
+                               if (yyin != stdin)
+                                   fclose(yyin);
+
+                               yy_delete_buffer(YY_CURRENT_BUFFER);
+
                                if (--include_stack_ptr < 0) {
                                    yyterminate();
                                } else {
-                                   yy_delete_buffer(YY_CURRENT_BUFFER);
                                    yy_switch_to_buffer(include_stack[include_stack_ptr]);
                                }
                              }

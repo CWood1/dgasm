@@ -536,6 +536,10 @@ void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* i
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t device = get_device_number(opcode_stmt, symbols, 0, offset);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+
   encoding |= device;
   (*buffer)[offset] = encoding;
 }
@@ -549,6 +553,13 @@ void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruc
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t device = get_device_number(opcode_stmt, symbols, 1, offset);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
+
   encoding |= device;
   encoding |= accumulator<<11;
   (*buffer)[offset] = encoding;
@@ -560,6 +571,15 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
 
   uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
   uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 0, offset, index);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  if (argc == 2) {
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]);
+  }
 
   encoding |= index << 8;
   encoding |= displacement;
@@ -573,6 +593,15 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
   uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
   uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  if (argc == 2) {
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]);
+  }
 
   encoding |= index << 8;
   (*buffer)[offset] = encoding;
@@ -588,6 +617,19 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 1, offset, index);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
+
+  if (argc == 3) {
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]);
+  }
+
   encoding |= index << 8;
   encoding |= accumulator;
   encoding |= displacement;
@@ -602,6 +644,19 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
   uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
+
+  if (argc == 3) {
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]);
+  }
 
   encoding |= index << 8;
   encoding |= accumulator;
@@ -630,6 +685,16 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
     encoding |= 0x8;
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
+
+  if (argc == 3)
+    free(opcode_stmt->opcode->operands->items[2]);
+
   encoding |= sourceaccumulator << 13;
   encoding |= destinationaccumulator << 11;
   encoding |= skip;
@@ -642,6 +707,10 @@ void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instr
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t immediate = get_long_imm(opcode_stmt, symbols, 0, offset);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = immediate;
 }
@@ -652,6 +721,13 @@ void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t sourceaccumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t destinationaccumulator = get_accumulator(opcode_stmt, symbols, 1, offset);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= sourceaccumulator << 13;
   encoding |= destinationaccumulator << 11;
@@ -664,6 +740,10 @@ void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+
   encoding |= accumulator << 11;
   (*buffer)[offset] = encoding;
 }
@@ -674,6 +754,13 @@ void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instru
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t immediate = get_long_imm(opcode_stmt, symbols, 1, offset);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= accumulator;
   (*buffer)[offset] = encoding;
@@ -686,6 +773,13 @@ void encode_immediate_instruction(uint16_t** buffer, int offset, instruction_t* 
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t immediate = get_short_imm(opcode_stmt, symbols, 1, offset) << 13;
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= accumulator;
   encoding |= immediate;
@@ -700,6 +794,19 @@ void encode_floatexload_instruction(uint16_t** buffer, int offset, instruction_t
   uint16_t acc = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
 
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[1]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+  free(opcode_stmt->opcode->operands->items[1]);
+
+  if (argc == 3) {
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]);
+  }
+
   encoding |= acc << 11;
   encoding |= index << 13;
 
@@ -713,6 +820,16 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
   uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+
+  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]->u.expr);
+  free(opcode_stmt->opcode->operands->items[0]);
+
+  if (argc == 2) {
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]);
+  }
 
   encoding |= index << 11;
 
@@ -777,6 +894,16 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
     uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
 
+    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]);
+
+    if (argc == 2) {
+      free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+      free(opcode_stmt->opcode->operands->items[1]->u.expr);
+      free(opcode_stmt->opcode->operands->items[1]);
+    }
+
     (*buffer)[offset] = instruction.base_encoding | (index << 8);
     (*buffer)[offset + 1] = displacement;
     break;
@@ -787,6 +914,16 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x1F) << 6;
+    
+    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);  
+    free(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]);
+    free(opcode_stmt->opcode->operands->items[1]);
+    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -797,6 +934,16 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x0F) << 6;
+    
+    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);  
+    free(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]);
+    free(opcode_stmt->opcode->operands->items[1]);
+    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -807,6 +954,16 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x7F) << 4;
+    
+    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[2]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]);
+    free(opcode_stmt->opcode->operands->items[1]);
+    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -816,6 +973,11 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     validate_explicit_argument_count(opcode_stmt, 2);
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 6;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
+    
+    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
+    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
+    free(opcode_stmt->opcode->operands->items[0]);
+    free(opcode_stmt->opcode->operands->items[1]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd;
     break;

@@ -11,6 +11,7 @@
 #include <string.h>
 
 extern FILE* yyin;
+int yylex_destroy(void);
 
 int write_raw_binary(const char *filename, const output_t *out) {
   FILE *f = fopen(filename, "wb");
@@ -154,10 +155,16 @@ int main(int argc, char** argv) {
 
   yyin = f;
   yyparse(prog);
+  yylex_destroy();
 
   offset_t* offsets = pass1(prog, cpu);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
   output_t output = pass2(prog, symbols, cpu);
+
+  free(prog);
+  free_symbol_table(symbols);
+  free_offsets(offsets);
+  free_lines();
 
   if (get_err_count()) {
     return 1;
@@ -196,6 +203,8 @@ int main(int argc, char** argv) {
 	write_octal_simh(stdout, &output);
     }
   }
+
+  free(output.data);
 
   return 0;
 }

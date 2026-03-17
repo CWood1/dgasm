@@ -16,5 +16,6 @@ typedef struct symboltbl {
 
 symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets);
 uint32_t find_symbol(symboltbl_t* symbols, const char* symbol, int offset);
+void free_symbol_table(symboltbl_t* symbols);
 
 #endif

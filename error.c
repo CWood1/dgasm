@@ -53,3 +53,14 @@ void report_error(statement_t* stmt, const char *fmt, ...) {
 int get_err_count() {
   return err_count;
 }
+
+void free_lines() {
+  for (int i = 0; i < line_count; i++) {
+    free(lines[i]);
+    lines[i] = NULL;
+  }
+
+  free(lines);
+
+  line_count = 0;
+}

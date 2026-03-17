@@ -100,10 +100,7 @@ Instruction encoding is table driven, to facilitate easy extension of the assemb
 ## Roadmap
 ### Roadmap to v1
 * Add a warning, for when a long instruction follows a skip, as this is invalid.
-* Add an include directive.
-* Go through available instructions for Nova 1, 3, and 4 CPUs, and confirm the table is correct.
 * Documentation: inline usage (-h), manual/wiki, man page.
-* Run through Valgrind, fix any memory issues that are highlighted.
 * Ramp up the warning levels from GCC, and fix any warnings.
 * Package for easy install.
 

@@ -109,3 +109,26 @@ uint16_t eval(expression_t* expr, symboltbl_t* symbols, int offset) {
     exit(1);
   }
 }
+
+void free_eval(expression_t* eval) {
+  switch (eval->kind) {
+  case EXPR_IDENTIFIER:
+    free(eval->u.identifier);
+    break;
+
+  case EXPR_BINARY:
+    free_eval(eval->u.binary.left);
+    free(eval->u.binary.left);
+
+    free_eval(eval->u.binary.right);
+    free(eval->u.binary.right);
+
+    break;
+
+  case EXPR_UNARY:
+    free_eval(eval->u.unary.child);
+    free(eval->u.unary.child);
+
+    break;
+  }
+}

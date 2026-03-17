@@ -21,5 +21,6 @@ typedef struct {
 
 offset_t* pass1(program_t* prog, int cpu);
 output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu);
+void free_offsets(offset_t* offs);
 
 #endif

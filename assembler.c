@@ -14,7 +14,7 @@ offset_t* pass1(program_t* prog, int cpu) {
   // Default to starting at 0100 - just after the zero page
   uint16_t current_address = 0100;
 
-  offset_t* head = malloc(sizeof(offset_t));
+  offset_t* head = calloc(1, sizeof(offset_t));
   offset_t* cur = head;
 
   statement_t* current_statement = prog->head;
@@ -28,20 +28,22 @@ offset_t* pass1(program_t* prog, int cpu) {
 
     case STMT_LABEL:
       // Labels need to be treated as offsets. Simply, compute the offset and add it to the table
-      cur->next = malloc(sizeof(offset_t));
+      cur->next = calloc(1, sizeof(offset_t));
       cur = cur->next;
 
       cur->name = strdup(current_statement->label);
+      free(current_statement->label);
       cur->address = current_address;
       break;
 
     case STMT_VARIABLE:
       // For variables, add them to the offset table, but then we also need to work out the size and
       // progress the current address by that far.
-      cur->next = malloc(sizeof(offset_t));
+      cur->next = calloc(1, sizeof(offset_t));
       cur = cur->next;
 
       cur->name = strdup(current_statement->variable->name);
+      free(current_statement->variable->name);
       cur->address = current_address;
 
       switch (current_statement->variable->type) {
@@ -102,7 +104,8 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 
   // Start at 0100, until we're told otherwise
   uint16_t current_addr = 0100;
-  for (statement_t* stmt = prog->head; stmt != NULL; stmt = stmt->next) {
+  statement_t* stmt = prog->head;
+  while (stmt != NULL) {
     switch (stmt->type) {
     case STMT_DIRECTIVE:
       switch (stmt->directive->type) {
@@ -110,6 +113,8 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 	current_addr = stmt->directive->org;
 	break;
       }
+
+      free(stmt->directive);
       break;
 
     case STMT_OPCODE: {
@@ -121,6 +126,10 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
       current_addr += size;
       if (current_addr > max_addr)
 	max_addr = current_addr;
+
+      free(stmt->opcode->mnemonic);
+      free(stmt->opcode->operands);
+      free(stmt->opcode);
 
       break;
     }
@@ -135,6 +144,8 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 	}
 	buffer[current_addr + strlen(stmt->variable->value.str) + 1] = 0;
 	size = strlen(stmt->variable->value.str) + 1;
+
+	free(stmt->variable->value.str);
 	break;
       case VARIABLE_PACKED_STRING: {
 	const char *str = stmt->variable->value.str;
@@ -156,10 +167,14 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 	}
 
 	size = word_index;
+
+	free(stmt->variable->value.str);
 	break;
       }
       case VARIABLE_NUMBER:
 	buffer[current_addr] = eval(stmt->variable->value.number, symbols, current_addr);
+	free_eval(stmt->variable->value.number);
+	free(stmt->variable->value.number);
 	size = 1;
 	break;
       case VARIABLE_RESV:
@@ -174,6 +189,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
       if (current_addr > max_addr)
 	max_addr = current_addr;
 
+      free(stmt->variable);
       break;
     }
 
@@ -182,6 +198,8 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 
       while (size < stmt->dw->count) {
 	buffer[current_addr + size] = eval(stmt->dw->items[size], symbols, current_addr);
+	free_eval(stmt->dw->items[size]);
+	free(stmt->dw->items[size]);
 	size++;
       }
 
@@ -192,16 +210,22 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
       if (current_addr > max_addr)
 	max_addr = current_addr;
 
+      free(stmt->dw->items);
+      free(stmt->dw);
       break;
     }
 
     default:
       // Don't do anything
     }
+
+    statement_t* next = stmt->next;
+    free(stmt);
+    stmt = next;
   }
 
   uint16_t used_size = (max_addr - min_addr) + 1;
-  uint16_t* trimmed = malloc(used_size * sizeof(uint16_t));
+  uint16_t* trimmed = calloc(used_size, sizeof(uint16_t));
   if (trimmed == NULL) {
     fprintf(stderr, "Out of memory\n");
     exit(1);
@@ -216,4 +240,14 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
   out.start_addr = min_addr;
 
   return out;
+}
+
+void free_offsets(offset_t* offs) {
+  offset_t* cur = offs;
+
+  while (cur != NULL) {
+    offset_t* next = cur->next;
+    free(cur);
+    cur = next;
+  }
 }

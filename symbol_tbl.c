@@ -54,7 +54,11 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
       exit(1);
     }
 
-    current_const = current_const->next;
+    free(current_const->name);
+
+    constant_t* next = current_const->next;
+    free(current_const);
+    current_const = next;
   }
 
   device_t* current_device = prog->devicetbl;
@@ -68,7 +72,11 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
       exit(1);
     }
 
-    current_device = current_device->next;
+    free(current_device->name);
+
+    device_t* next = current_device->next;
+    free(current_device);
+    current_device = next;
   }
 
   offset_t* current_offset = offsets->next;
@@ -82,6 +90,7 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
       exit(1);
     }
 
+    free(current_offset->name);
     current_offset = current_offset->next;
   }
 
@@ -100,4 +109,17 @@ uint32_t find_symbol(symboltbl_t* symbols, const char* symbol, int offset) {
   }
 
   return eval(cur->value, symbols, offset);
+}
+
+void free_symbol_table(symboltbl_t* symbols) {
+  symboltbl_t* cur = symbols;
+
+  while(cur) {
+    symboltbl_t* next = cur->next;
+    free(cur->name);
+    free_eval(cur->value);
+    free(cur->value);
+    free(cur);
+    cur = next;
+  }
 }

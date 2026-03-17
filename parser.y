@@ -146,6 +146,7 @@ constant_stmt:
 		CONST IDENTIFIER EQUALS expression EOL {
 		    $$ = malloc(sizeof(constant_t));
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = $4;
 		}
 	;
@@ -154,6 +155,7 @@ device_stmt:
 		DEV IDENTIFIER EQUALS INTEGER EOL {
 		    $$ = malloc(sizeof(device_t));
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = $4;
 		}
 	;
@@ -161,6 +163,7 @@ device_stmt:
 label_stmt:
 		IDENTIFIER COLON EOL {
 		    $$ = strdup($1);
+		    free($1);
 		}
 	;
 
@@ -177,24 +180,28 @@ var_stmt:
 		    $$ = malloc(sizeof(variable_t));
 		    $$->type = VARIABLE_NUMBER;
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = (variable_value_t){ .number = $4 };
 		}
 	|	VAR IDENTIFIER EQUALS STRING EOL {
 		    $$ = malloc(sizeof(variable_t));
 		    $$->type = VARIABLE_STRING;
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = (variable_value_t){ .str = $4 };
 		}
 	|	VAR IDENTIFIER EQUALS STRING PACKED EOL {
 		    $$ = malloc(sizeof(variable_t));
 		    $$->type = VARIABLE_PACKED_STRING;
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = (variable_value_t){ .str = $4 };
 		}
 	|	VAR IDENTIFIER RESV INTEGER EOL {
 		    $$ = malloc(sizeof(variable_t));
 		    $$->type = VARIABLE_RESV;
 		    $$->name = strdup($2);
+		    free($2);
 		    $$->value = (variable_value_t){ .resv = $4 };
 		}
 	;
@@ -231,11 +238,6 @@ expression:
 		    $$->kind = EXPR_INTEGER;
 		    $$->u.number = $1;
 		}
-	|	AT INTEGER {
-		    $$ = malloc(sizeof(expression_t));
-		    $$->kind = EXPR_INDIRECT;
-		    $$->u.number = $2;
-		}
 	|	DOT {
 		    $$ = malloc(sizeof(expression_t));
 		    $$->kind = EXPR_PC;
@@ -244,6 +246,7 @@ expression:
 		    $$ = malloc(sizeof(expression_t));
 		    $$->kind = EXPR_IDENTIFIER;
 		    $$->u.identifier = strdup($1);
+		    free($1);
 		}
 	| 	expression PLUS expression {
 		    $$ = malloc(sizeof(expression_t));
@@ -361,7 +364,7 @@ operand:
 
 operand_list:
 		operand {
-		    $$ = malloc(sizeof(operand_list_t));
+		    $$ = calloc(1, sizeof(operand_list_t));
 		    $$->count = 1;
 		    $$->items[0] = $1;
 		}
@@ -382,18 +385,21 @@ opcode_stmt:
 		    $$->ignoreresult = 0;
 		    $$->mnemonic = strdup($1);
 		    $$->operands = NULL;
+		    free($1);
 		}
 	| 	IDENTIFIER operand_list EOL {
 		    $$ = malloc(sizeof(opcode_t));
 		    $$->ignoreresult = 0;
 		    $$->mnemonic = strdup($1);
 		    $$->operands = $2;
+		    free($1);
 		}
 	|	 IDENTIFIER HASH operand_list EOL {
 		    $$ = malloc(sizeof(opcode_t));
 		    $$->ignoreresult = 1;
 		    $$->mnemonic = strdup($1);
 		    $$->operands = $3;
+		    free($1);
 		}
 		    
 ;
