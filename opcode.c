@@ -425,6 +425,8 @@ uint16_t get_addressing_mode(statement_t* opcode_stmt, symboltbl_t* symbols, int
   if (x > 3) {
     report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d", x);
   }
+
+  return x;
 }
 
 uint16_t get_short_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, int index) {
@@ -530,7 +532,6 @@ instruction_t find_instruction(statement_t* stmt, int cpu) {
 }
 
 void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
   validate_explicit_argument_count(opcode_stmt, 1);
@@ -545,7 +546,6 @@ void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* i
 }
 
 void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
   validate_explicit_argument_count(opcode_stmt, 2);
@@ -587,7 +587,6 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
 }
 
 void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
@@ -609,7 +608,6 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
 }
 
 void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
   
   int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
@@ -637,7 +635,6 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
 }
 
 void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_t* instruction, statement_t* opcode_stmt, symboltbl_t* symbols) {
-  opcode_t* opcode = opcode_stmt->opcode;
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
@@ -838,9 +835,7 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
 }
 
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols, int cpu) {
-  int instruction_count = sizeof(instruction_tbl) / sizeof(instruction_t);
   instruction_t instruction = find_instruction(opcode_stmt, cpu);
-  opcode_t* opcode = opcode_stmt->opcode;
 
   switch (instruction.encoding_type) {
   case ENCODING_CONSTANT:

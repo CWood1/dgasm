@@ -130,5 +130,8 @@ void free_eval(expression_t* eval) {
     free(eval->u.unary.child);
 
     break;
+
+  default:
+    break;
   }
 }

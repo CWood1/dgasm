@@ -10,4 +10,7 @@ FLEX_TARGET(DGAsmLexer lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.c
 ADD_FLEX_BISON_DEPENDENCY(DGAsmLexer DGAsmParser)
 
 add_executable(dgasm main.c symbol_tbl.c assembler.c opcode.c eval.c error.c ${BISON_DGAsmParser_OUTPUTS} ${FLEX_DGAsmLexer_OUTPUTS})
+
+target_compile_options(dgasm PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
 install(TARGETS dgasm RUNTIME DESTINATION bin)

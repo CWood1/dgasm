@@ -43,6 +43,8 @@ int include_stack_ptr = 0;
 %x string
 %x incl
 %option yylineno
+%option noinput
+%option nounput
 
 %%
 
@@ -87,7 +89,7 @@ include                      BEGIN(incl);
 
 <string>\\[0-7]{1,3}         {
                                /* octal escape sequence */
-                               int result;
+                               unsigned int result;
 
                                (void) sscanf( yytext + 1, "%o", &result );
 
@@ -185,7 +187,7 @@ int yywrap() {
 	return 1;
 }
 
-int yyerror(program_t* prog, char *s) {
+void yyerror(char *s) {
 	fprintf(stderr,
             "Parse error at line %d near '%s': %s\n", yylineno, yytext, s);
 }

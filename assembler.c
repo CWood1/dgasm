@@ -194,7 +194,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
     }
 
     case STMT_DW: {
-      int size = 0;
+      size_t size = 0;
 
       while (size < stmt->dw->count) {
 	buffer[current_addr + size] = eval(stmt->dw->items[size], symbols, current_addr);

@@ -69,10 +69,6 @@ typedef struct variable_t {
   variable_value_t value;
 } variable_t;
 
-typedef struct {
-
-} section_t;
-
 typedef struct device_t {
   char* name;
   long value;
