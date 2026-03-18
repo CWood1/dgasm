@@ -3,6 +3,9 @@ include(GNUInstallDirs)
 
 project(dgasm VERSION 1.0.0 LANGUAGES C)
 
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED)
+
 # Create a config.h file from a template (or just define it)
 configure_file(
     "${PROJECT_SOURCE_DIR}/config.h.in"
