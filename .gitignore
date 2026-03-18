@@ -9,3 +9,5 @@ dgasm
 CMakeCache.txt
 cmake_install.cmake
 install_manifest.txt
+config.h
+dgasm.1

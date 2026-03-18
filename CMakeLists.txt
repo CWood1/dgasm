@@ -1,4 +1,20 @@
+cmake_minimum_required(VERSION 3.10)
 include(GNUInstallDirs)
+
+project(dgasm VERSION 1.0.0 LANGUAGES C)
+
+# Create a config.h file from a template (or just define it)
+configure_file(
+    "${PROJECT_SOURCE_DIR}/config.h.in"
+    "${PROJECT_BINARY_DIR}/config.h"
+)
+
+string(TIMESTAMP CURRENT_DATE "%B %Y")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/dgasm.1.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/dgasm.1"
+    @ONLY
+)
 
 FIND_PACKAGE(BISON REQUIRED)
 BISON_TARGET(DGAsmParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.c

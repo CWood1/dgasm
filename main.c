@@ -4,6 +4,7 @@
 #include "symbol_tbl.h"
 #include "error.h"
 #include "opcode.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,6 +95,11 @@ void usage(const char* progname) {
     
   printf("Example:\n");
   printf("  %s -t nova3 -f simh -o boot.out main.s\n", progname);
+}
+
+void version() {
+  printf("dgasm version %s\n", DGASM_VERSION);
+  printf("Copyright (c) 2026 Connor Wood (Venos)\n");
 }
 
 int main(int argc, char** argv) {

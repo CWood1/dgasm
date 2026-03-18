@@ -1,4 +1,4 @@
-.TH DGASM 1 "March 2026" "v1.0" "DGASM User Manual"
+.TH DGASM 1 "@CURRENT_DATE@" "v@PROJECT_VERSION@" "DGASM User Manual"
 .SH NAME
 dgasm \- Assembler for Data General Nova and Eclipse systems
 .SH SYNOPSIS
