@@ -218,6 +218,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
 
     default:
       // Don't do anything
+      break;
     }
 
     statement_t* next = stmt->next;
