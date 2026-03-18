@@ -1,3 +1,11 @@
+name: "Check for memory leaks with Valgrind"
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
 jobs:
   memcheck:
     runs-on: ubuntu-latest
