@@ -20,11 +20,12 @@ offset_t* pass1(program_t* prog, int cpu) {
   statement_t* current_statement = prog->head;
   while (current_statement != NULL) {
     switch (current_statement->type) {
-    case STMT_OPCODE:
+    case STMT_OPCODE: {
       // Instructions are easy - simply add the encoding size of the instruction to the current address
       instruction_t inst = find_instruction(current_statement, cpu);
       current_address += inst.size;
       break;
+    }
 
     case STMT_LABEL:
       // Labels need to be treated as offsets. Simply, compute the offset and add it to the table
