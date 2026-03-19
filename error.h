@@ -4,8 +4,8 @@
 #include <stdarg.h>
 #include "ast.h"
 
-void source_add_line(const char *line);
-const char *source_get_line(int lineno);
+void source_add_line(char* filename, const char *line);
+const char *source_get_line(const char *filename, int lineno);
 void report_error(statement_t* stmt, const char *fmt, ...);
 int get_err_count();
 void free_lines();

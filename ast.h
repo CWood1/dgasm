@@ -140,6 +140,7 @@ typedef enum {
 
 typedef struct statement {
   // Error reporting primitives
+  char* fn;
   int lineno;
 
   statement_type_t type;

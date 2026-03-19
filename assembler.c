@@ -222,6 +222,7 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
     }
 
     statement_t* next = stmt->next;
+    free(stmt->fn);
     free(stmt);
     stmt = next;
   }

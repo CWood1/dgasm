@@ -15,10 +15,21 @@ static char *string_buf_ptr;
 char* current_line = NULL;
 static size_t current_line_len = 0;
 
+#define MAX_INCLUDE_DEPTH 10
+
+typedef struct {
+    YY_BUFFER_STATE buffer;
+    char* fn;
+    int lineno;
+} include_frame_t;
+
+include_frame_t include_stack[MAX_INCLUDE_DEPTH];
+int include_stack_ptr = 0;
+
 void append_to_line(const char* text, int len) {
     for(int i = 0; i < len; i++) {
 	if (text[i] == '\n') {
-	    source_add_line(current_line ? current_line : "");
+	    source_add_line(include_stack[include_stack_ptr].fn, current_line ? current_line : "");
 	    free(current_line);
 	    current_line = strdup("");
 	    current_line_len = 0;
@@ -29,10 +40,6 @@ void append_to_line(const char* text, int len) {
 	}
     }
 }
-
-#define MAX_INCLUDE_DEPTH 10
-YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
-int include_stack_ptr = 0;
 
 %}
 
@@ -57,9 +64,13 @@ include                      BEGIN(incl);
                                    exit(1);
                                }
 
-                               include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+                               include_stack[include_stack_ptr].buffer = YY_CURRENT_BUFFER;
                                char* fn = strpbrk(yytext, "\"") + 1;
                                *(strpbrk(fn, "\"")) = '\0';
+
+                               include_stack[++include_stack_ptr].fn = strdup(fn);
+                               include_stack[include_stack_ptr].lineno = yylineno;
+
                                yyin = fopen(fn, "r");
 
                                if (!yyin) {
@@ -163,8 +174,9 @@ SBN                          { return SBN; }
                                if (yyin != stdin)
                                    fclose(yyin);
 
-                               source_add_line(current_line ? current_line : "");
+                               source_add_line(include_stack[include_stack_ptr].fn, current_line ? current_line : "");
                                free(current_line);
+                               free(include_stack[include_stack_ptr].fn);
                                current_line = NULL;
 
                                yy_delete_buffer(YY_CURRENT_BUFFER);
@@ -172,7 +184,8 @@ SBN                          { return SBN; }
                                if (--include_stack_ptr < 0) {
                                    yyterminate();
                                } else {
-                                   yy_switch_to_buffer(include_stack[include_stack_ptr]);
+                                   yy_switch_to_buffer(include_stack[include_stack_ptr].buffer);
+                                   include_stack[include_stack_ptr].lineno = yylineno;
                                }
                              }
 

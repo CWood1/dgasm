@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "parser.h"
+#include "lexer.h"
 #include "assembler.h"
 #include "symbol_tbl.h"
 #include "error.h"
@@ -10,6 +11,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
+typedef struct {
+    YY_BUFFER_STATE buffer;
+    char* fn;
+    int lineno;
+} include_frame_t;
+
+extern include_frame_t include_stack[];
 
 extern FILE* yyin;
 int yylex_destroy(void);
@@ -167,6 +176,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  include_stack[0].fn = strdup(fn);
+  include_stack[0].lineno = 1;
   FILE* f = fopen(fn, "r");
   if (!f) {
     perror("Could not open input file");

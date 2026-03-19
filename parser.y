@@ -1,10 +1,20 @@
 %{
 #include "ast.h"
+#include "lexer.h"
 #include <string.h>
 #include <stdlib.h>
 
 
 #include <stdio.h>
+
+typedef struct {
+    YY_BUFFER_STATE buffer;
+    char* fn;
+    int lineno;
+} include_frame_t;
+
+extern include_frame_t include_stack[];
+extern int include_stack_ptr;
 
 int yylex(void);
 void yyerror(program_t*, char const*);
@@ -22,7 +32,8 @@ static void append_device(program_t *prog, device_t *d) {
 
 void append_statement(program_t *p, statement_t *stmt) {
     stmt->next = NULL;
-    stmt->lineno = yylineno - 1;  // By the time we get here, we've moved on already
+    stmt->lineno = yylineno - include_stack[include_stack_ptr].lineno;  // By the time we get here, we've moved on already
+    stmt->fn = strdup(include_stack[include_stack_ptr].fn);
 
     if (!p->head) {
         p->head = p->tail = stmt;
