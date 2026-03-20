@@ -21,7 +21,6 @@ jobs:
       - name: Configure (AFL + ASan)
         run: |
           CC=afl-clang-fast \
-          CFLAGS="-std=gnu2x -fsanitize=address -g -O1" \
           cmake -S . -B build-afl
 
       - name: Build
