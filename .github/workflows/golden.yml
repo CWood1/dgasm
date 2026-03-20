@@ -1,0 +1,28 @@
+name: "Check for golden output"
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'release-*'
+
+jobs:
+  memcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake bison flex
+      - name: Build
+        run: |
+          cmake -S . -B build
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure --output-junit results.xml -L golden
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/results.xml

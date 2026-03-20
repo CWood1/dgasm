@@ -47,18 +47,24 @@ enable_testing()
 function(add_memcheck_test name sourcefile)
   add_test(
     NAME memcheck_${name}
-    COMMAND valgrind
-        --leak-check=full
-        --error-exitcode=1
-	$<TARGET_FILE:dgasm>
-	-t eclipse_s140 -f octal
-	${sourcefile}
+    COMMAND valgrind --leak-check=full --error-exitcode=1
+    $<TARGET_FILE:dgasm> -t eclipse_s140 -f octal ${sourcefile}
   )
 
   set_tests_properties(memcheck_${name} PROPERTIES LABELS "memcheck")
 endfunction()
 
+function(add_golden_test name input expected)
+  add_test(
+    NAME golden_${name}
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${input} -DEXPECTED=${expected} -DASSEMBLE=$<TARGET_FILE:dgasm> -P ${CMAKE_SOURCE_DIR}/cmake/run_golden_test.cmake
+  )
+
+  set_tests_properties(golden_${name} PROPERTIES LABELS "golden")
+endfunction()
+
 add_memcheck_test(hello ${CMAKE_SOURCE_DIR}/tests/hello.s)
+add_golden_test(lef ${CMAKE_SOURCE_DIR}/tests/golden/lef.s ${CMAKE_SOURCE_DIR}/tests/golden/lef.octal)
 
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
