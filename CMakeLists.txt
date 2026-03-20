@@ -36,3 +36,27 @@ target_compile_options(dgasm PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 install(TARGETS dgasm RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES dgasm.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
+# Testing
+
+enable_testing()
+
+function(add_memcheck_test name sourcefile)
+  add_test(
+    NAME memcheck_${name}
+    COMMAND valgrind
+        --leak-check=full
+        --error-exitcode=1
+	$<TARGET_FILE:dgasm>
+	-t eclipse_s140 -f octal
+	${sourcefile}
+  )
+
+  set_tests_properties(memcheck_${name} PROPERTIES LABELS "memcheck")
+endfunction()
+
+add_memcheck_test(hello ${CMAKE_SOURCE_DIR}/tests/hello.s)
+
+add_custom_target(check
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+  DEPENDS dgasm)
