@@ -15,7 +15,7 @@ jobs:
         run: sudo apt-get install -y cmake bison flex gcovr
       - name: Build
         run: |
-          cmake -S . -B build -DENABLE_FUZZING=ON
+          cmake -S . -B build -DENABLE_COVERAGE=ON
           cmake --build build
       - name: Run tests
         run: |
