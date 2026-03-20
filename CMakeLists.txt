@@ -5,6 +5,12 @@ project(dgasm VERSION 1.0.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED)
+option(ENABLE_COVERAGE OFF)
+
+if(ENABLE_COVERAGE)
+  add_compile_options(--coverage)
+  add_link_options(--coverage)
+endif()
 
 # Create a config.h file from a template (or just define it)
 configure_file(

@@ -12,10 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt-get install -y cmake bison flex
+        run: sudo apt-get install -y cmake bison flex gcovr
       - name: Build
         run: |
-          cmake -S . -B build
+          cmake -S . -B build -DENABLE_FUZZING=ON
           cmake --build build
       - name: Run tests
         run: |
@@ -26,3 +26,12 @@ jobs:
         with:
           name: test-results
           path: build/results.xml
+      - name: Generate coverage result
+        run: |
+          cd build
+          gcovr --xml coverage.xml -r ..
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/coverage.xml
