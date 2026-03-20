@@ -90,6 +90,24 @@ void report_error(statement_t* stmt, const char *fmt, ...) {
   err_count += 1;
 }
 
+void report_syntax_error(char* fn, int lineno, const char* fmt, ...) {
+  va_list args;
+
+  fprintf(stderr, "%s:%d - ", fn, lineno);
+
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+
+  fprintf(stderr, "\n");
+
+  const char* line = source_get_line(fn, lineno);
+  if (line)
+    fprintf(stderr, "  %s\n", line);
+
+  err_count += 1;
+}
+
 int get_err_count() {
   return err_count;
 }

@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - 'release-*'
 
 jobs:
   memcheck:
@@ -15,7 +15,14 @@ jobs:
         run: sudo apt-get install -y valgrind cmake bison flex
       - name: Build
         run: |
-          cmake .
-          make
-      - name: Run Valgrind
-        run: valgrind --leak-check=full --error-exitcode=1 ./dgasm -t eclipse_s140 -f octal tests/hello.s
+          cmake -S . -B build
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure --output-junit results.xml -L memcheck
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/results.xml
