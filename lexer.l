@@ -200,8 +200,11 @@ int yywrap() {
 	return 1;
 }
 
-void yyerror(char *s) {
+void yyerror(program_t* p, char *s) {
 	fprintf(stderr,
             "Parse error at line %d near '%s': %s\n", yylineno, yytext, s);
+	while(false) {
+	    *p = *p;
+	}
 }
 
