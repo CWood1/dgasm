@@ -16,12 +16,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y afl++ cmake make clang
+          sudo apt-get install -y afl++ cmake make clang bison flex
 
       - name: Configure (AFL + ASan)
         run: |
           CC=afl-clang-fast \
-          CFLAGS="-fsanitize=address -g -O1" \
+          CFLAGS="-std=gnu2x -fsanitize=address -g -O1" \
           cmake -S . -B build-afl
 
       - name: Build
