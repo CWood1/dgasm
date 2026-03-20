@@ -11,3 +11,6 @@ cmake_install.cmake
 install_manifest.txt
 config.h
 dgasm.1
+CTestTestfile.cmake
+Testing/
+build/

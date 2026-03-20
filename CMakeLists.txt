@@ -8,15 +8,15 @@ set(CMAKE_C_STANDARD_REQUIRED)
 
 # Create a config.h file from a template (or just define it)
 configure_file(
-    "${PROJECT_SOURCE_DIR}/config.h.in"
-    "${PROJECT_BINARY_DIR}/config.h"
+  "${PROJECT_SOURCE_DIR}/config.h.in"
+  "${PROJECT_BINARY_DIR}/config.h"
 )
 
 string(TIMESTAMP CURRENT_DATE "%B %Y")
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/dgasm.1.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/dgasm.1"
-    @ONLY
+  "${CMAKE_CURRENT_SOURCE_DIR}/dgasm.1.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/dgasm.1"
+  @ONLY
 )
 
 FIND_PACKAGE(BISON REQUIRED)
@@ -33,6 +33,9 @@ ADD_FLEX_BISON_DEPENDENCY(DGAsmLexer DGAsmParser)
 add_executable(dgasm main.c symbol_tbl.c assembler.c opcode.c eval.c error.c ${BISON_DGAsmParser_OUTPUTS} ${FLEX_DGAsmLexer_OUTPUTS})
 
 target_compile_options(dgasm PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_include_directories(
+  dgasm PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
+)
 
 install(TARGETS dgasm RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES dgasm.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
