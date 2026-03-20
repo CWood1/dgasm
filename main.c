@@ -194,6 +194,10 @@ int main(int argc, char** argv) {
   yyparse(prog);
   yylex_destroy();
 
+  if (get_err_count()) {
+    return 1;
+  }
+
   offset_t* offsets = pass1(prog, cpu);
   symboltbl_t* symbols = resolve_symbols(prog, offsets);
   output_t output = pass2(prog, symbols, cpu);
