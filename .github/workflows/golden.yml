@@ -33,5 +33,5 @@ jobs:
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: coverage-results
           path: build/coverage.xml
