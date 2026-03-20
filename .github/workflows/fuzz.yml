@@ -9,6 +9,8 @@ on:
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    container:
+      image: aflplusplus/aflplusplus
 
     steps:
       - uses: actions/checkout@v4
