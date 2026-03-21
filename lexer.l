@@ -220,7 +220,7 @@ void yyerror(program_t* p, char *s) {
 			    "Syntax error near %s: %s", yytext, s);
     } else {
 	// At this point, it's going to exit anyhow, might as well exit here
-	fprintf(stderr, "Error in root file around EOF, near %s: %s\n", yytext, s);
+	fprintf(stderr, "Error in root file around EOF: %s\n", s);
 	exit(1);
     }
 
@@ -228,4 +228,3 @@ void yyerror(program_t* p, char *s) {
 	*p = *p;
     }
 }
-
