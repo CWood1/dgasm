@@ -1,0 +1,15 @@
+MOV 0,0,SNR
+	//0, p:	
+	HALT
+LDA  0,0,SNR//@ º
+	MOV 0,0,SNR
+MOV 0,0,SNR
+///0@ º
+	MOV 0,0,SNR
+MOV 0,0,SNR
+	
+MOV 0,0,SNR
+//º
+	MOV 0,0,SNR
+MOV 0,0,SNR
+	JMP don

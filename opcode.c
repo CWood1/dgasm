@@ -393,6 +393,7 @@ int validate_ranged_argument_count(statement_t* opcode_stmt, int lower, int uppe
 uint16_t get_device_number(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requries a device number");
+    return 0;
   }
   uint16_t device = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -400,12 +401,17 @@ uint16_t get_device_number(statement_t* opcode_stmt, symboltbl_t* symbols, int o
     report_error(opcode_stmt, "Requires a device. Device 0%o is out of bounds", device);
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return device;
 }
 
 uint16_t get_accumulator(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requries an accumulator");
+    return 0;
   }
   uint16_t acc = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -413,12 +419,17 @@ uint16_t get_accumulator(statement_t* opcode_stmt, symboltbl_t* symbols, int ope
     report_error(opcode_stmt, "Requires an accumulator. Accumulator 0%o is out of bounds", acc);
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return acc;
 }
 
 uint16_t get_addressing_mode(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requires an index");
+    return 0;
   }
   uint16_t x = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -426,12 +437,17 @@ uint16_t get_addressing_mode(statement_t* opcode_stmt, symboltbl_t* symbols, int
     report_error(opcode_stmt, "Invalid addressing mode. Expected 0, 1, 2, or 3, got %d", x);
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return x;
 }
 
 uint16_t get_short_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, int index) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR && opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_INDIRECT) {
     report_error(opcode_stmt, "Syntax error: Requires a displacement");
+    return 0;
   }
   uint16_t displacement = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -452,12 +468,17 @@ uint16_t get_short_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, 
     displacement |= 0x400;
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return displacement;
 }
 
 uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, int index) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR && opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_INDIRECT) {
     report_error(opcode_stmt, "Syntax error: Requires a displacement");
+    return 0;
   }
   uint16_t displacement = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -477,19 +498,29 @@ uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, i
     displacement |= 0x8000;
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return displacement;
 }
 
 uint16_t get_long_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requires an immediate");
+    return 0;
   }
+
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
   return eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 }
 
 uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requires an immediate");
+    return 0;
   }
   uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -497,12 +528,17 @@ uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int opera
     report_error(opcode_stmt, "Immediate out of range. Must be 1-4, got %d", imm);
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return imm - 1;
 }
 
 uint16_t get_ranged_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset, uint16_t low, uint16_t high) {
   if (opcode_stmt->opcode->operands->items[operand]->kind != OPERAND_EXPR) {
     report_error(opcode_stmt, "Syntax error: Requires an immediate");
+    return 0;
   }
   uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
 
@@ -510,12 +546,17 @@ uint16_t get_ranged_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int oper
     report_error(opcode_stmt, "Immediate out of range. Must be %d - %d, got %d", imm, low, high);
   }
 
+  free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]->u.expr);
+  free(opcode_stmt->opcode->operands->items[operand]);
+
   return imm;
 }
 
 instruction_t find_instruction(statement_t* stmt, int cpu) {
   if (stmt->type != STMT_OPCODE) {
     report_error(stmt, "Attempted to decode opcode on statement that isn't an opcode");
+    return instruction_tbl[0];
   }
 
   char* opcode = stmt->opcode->mnemonic;
@@ -537,10 +578,6 @@ void encode_ionoxfer_instruction(uint16_t** buffer, int offset, instruction_t* i
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t device = get_device_number(opcode_stmt, symbols, 0, offset);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-
   encoding |= device;
   (*buffer)[offset] = encoding;
 }
@@ -552,13 +589,6 @@ void encode_io_instruction(uint16_t** buffer, int offset, instruction_t* instruc
 
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t device = get_device_number(opcode_stmt, symbols, 1, offset);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= device;
   encoding |= accumulator<<11;
@@ -572,15 +602,6 @@ void encode_flow_instruction(uint16_t** buffer, int offset, instruction_t* instr
   uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
   uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 0, offset, index);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  if (argc == 2) {
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]);
-  }
-
   encoding |= index << 8;
   encoding |= displacement;
   (*buffer)[offset] = encoding;
@@ -592,15 +613,6 @@ void encode_extendedflow_instruction(uint16_t** buffer, int offset, instruction_
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
   uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
   uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  if (argc == 2) {
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]);
-  }
 
   encoding |= index << 8;
   (*buffer)[offset] = encoding;
@@ -615,19 +627,6 @@ void encode_load_instruction(uint16_t** buffer, int offset, instruction_t* instr
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t displacement = get_short_displacement(opcode_stmt, symbols, 1, offset, index);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
-
-  if (argc == 3) {
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]);
-  }
-
   encoding |= index << 8;
   encoding |= accumulator;
   encoding |= displacement;
@@ -641,19 +640,6 @@ void encode_extendedload_instruction(uint16_t** buffer, int offset, instruction_
   uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
-
-  if (argc == 3) {
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]);
-  }
 
   encoding |= index << 8;
   encoding |= accumulator;
@@ -682,13 +668,6 @@ void encode_alu_instruction(uint16_t** buffer, int offset, instruction_t* instru
     encoding |= 0x8;
   }
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
-
   if (argc == 3)
     free(opcode_stmt->opcode->operands->items[2]);
 
@@ -704,10 +683,6 @@ void encode_save_instruction(uint16_t** buffer, int offset, instruction_t* instr
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t immediate = get_long_imm(opcode_stmt, symbols, 0, offset);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-
   (*buffer)[offset] = encoding;
   (*buffer)[offset + 1] = immediate;
 }
@@ -718,13 +693,6 @@ void encode_twoacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t sourceaccumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t destinationaccumulator = get_accumulator(opcode_stmt, symbols, 1, offset);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= sourceaccumulator << 13;
   encoding |= destinationaccumulator << 11;
@@ -737,10 +705,6 @@ void encode_oneacc_instruction(uint16_t** buffer, int offset, instruction_t* ins
   validate_explicit_argument_count(opcode_stmt, 1);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-
   encoding |= accumulator << 11;
   (*buffer)[offset] = encoding;
 }
@@ -751,13 +715,6 @@ void encode_extended_immediate_instruction(uint16_t** buffer, int offset, instru
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t immediate = get_long_imm(opcode_stmt, symbols, 1, offset);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= accumulator;
   (*buffer)[offset] = encoding;
@@ -770,13 +727,6 @@ void encode_immediate_instruction(uint16_t** buffer, int offset, instruction_t* 
   validate_explicit_argument_count(opcode_stmt, 2);
   uint16_t accumulator = get_accumulator(opcode_stmt, symbols, 0, offset) << 11;
   uint16_t immediate = get_short_imm(opcode_stmt, symbols, 1, offset) << 13;
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
 
   encoding |= accumulator;
   encoding |= immediate;
@@ -791,19 +741,6 @@ void encode_floatexload_instruction(uint16_t** buffer, int offset, instruction_t
   uint16_t acc = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
 
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[1]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-  free(opcode_stmt->opcode->operands->items[1]);
-
-  if (argc == 3) {
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]);
-  }
-
   encoding |= acc << 11;
   encoding |= index << 13;
 
@@ -817,16 +754,6 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
   uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
-
-  free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]->u.expr);
-  free(opcode_stmt->opcode->operands->items[0]);
-
-  if (argc == 2) {
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]);
-  }
 
   encoding |= index << 11;
 
@@ -889,16 +816,6 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t index = (argc == 1) ? 1 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
     uint16_t displacement = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
 
-    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]);
-
-    if (argc == 2) {
-      free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-      free(opcode_stmt->opcode->operands->items[1]->u.expr);
-      free(opcode_stmt->opcode->operands->items[1]);
-    }
-
     (*buffer)[offset] = instruction.base_encoding | (index << 8);
     (*buffer)[offset + 1] = displacement;
     break;
@@ -909,16 +826,6 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x1F) << 6;
-    
-    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);  
-    free(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]);
-    free(opcode_stmt->opcode->operands->items[1]);
-    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -929,16 +836,6 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x0F) << 6;
-    
-    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);  
-    free(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]);
-    free(opcode_stmt->opcode->operands->items[1]);
-    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -949,16 +846,6 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 13;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
     uint16_t op = get_ranged_imm(opcode_stmt, symbols, 2, offset, 0, 0x7F) << 4;
-    
-    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[2]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]);
-    free(opcode_stmt->opcode->operands->items[1]);
-    free(opcode_stmt->opcode->operands->items[2]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd | op;
     break;
@@ -968,11 +855,6 @@ int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, 
     validate_explicit_argument_count(opcode_stmt, 2);
     uint16_t acs = get_accumulator(opcode_stmt, symbols, 0, offset) << 6;
     uint16_t acd = get_accumulator(opcode_stmt, symbols, 1, offset) << 11;
-    
-    free_eval(opcode_stmt->opcode->operands->items[0]->u.expr);
-    free_eval(opcode_stmt->opcode->operands->items[1]->u.expr);
-    free(opcode_stmt->opcode->operands->items[0]);
-    free(opcode_stmt->opcode->operands->items[1]);
 
     (*buffer)[offset] = instruction.base_encoding | acs | acd;
     break;

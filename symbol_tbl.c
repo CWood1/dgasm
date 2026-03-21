@@ -68,7 +68,7 @@ symboltbl_t* resolve_symbols(program_t* prog, offset_t* offsets) {
     value->u.number = current_device->value & 0xFFFF;
 
     if (insert_symbol(&head, current_device->name, value) != 0) {
-      printf("Multiple definitions for symbol %s.\n", current_const->name);
+      printf("Multiple definitions for symbol %s.\n", current_device->name);
       exit(1);
     }
 

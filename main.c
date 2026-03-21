@@ -154,6 +154,10 @@ int main(int argc, char** argv) {
 	cpu = CPU_NOVA4;
       if (strcmp(optarg, "eclipse_s140") == 0)
 	cpu = CPU_ECLIPSE_S140;
+      else {
+	fprintf(stderr, "Unrecognised CPU type %s\n", optarg);
+	exit(1);
+      }
       break;
 
     default:

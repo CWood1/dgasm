@@ -1,0 +1,9 @@
+	//0P2222, 0
+	JMP 22, 2
+	JMP 22---- - 2, 2
+	JMP 222222, 0
+	JMP 22, 2
+	JMP 222222, 0
+	JMP 220,SNR
+	JMP 2
+	JMP hellorldloop

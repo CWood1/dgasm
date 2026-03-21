@@ -1,0 +1,23 @@
+///op:	
+	DIA 2, 2
+	JMP 222222	
+	DIA@2, 2
+	JMP 22222222222, 0
+	op:	
+	DIA 2, 2
+	JMP 222222	
+	DIA 2, 2
+	JMP 222220,SNR
+	//0, º
+		////00, 0@ º
+	MOV 0,0,SNR
+MOV 0,0,SNR
+	JMP do222222, 0
+	JMP oe22, 2
+	JMP 22222, 0
+	JMP oe2
+	JMP oe
+JMP oe22, 2
+	JMP 22222, 0
+	JMP oe2
+	JMP oe
