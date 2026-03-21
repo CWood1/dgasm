@@ -201,8 +201,16 @@ int yywrap() {
 }
 
 void yyerror(program_t* p, char *s) {
-    report_syntax_error(include_stack[include_stack_ptr].fn, yylineno,
-			"Syntax error near %s: %s", yytext, s);
+    if (include_stack_ptr >= 0) {
+	source_add_line(include_stack[include_stack_ptr].fn, current_line ? current_line : "");
+	report_syntax_error(include_stack[include_stack_ptr].fn, yylineno,
+			    "Syntax error near %s: %s", yytext, s);
+    } else {
+	// At this point, it's going to exit anyhow, might as well exit here
+	fprintf(stderr, "Error in root file around EOF, near %s: %s\n", yytext, s);
+	exit(1);
+    }
+
     while(false) {
 	*p = *p;
     }

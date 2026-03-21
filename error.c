@@ -60,6 +60,11 @@ void source_add_line(char* filename, const char *line) {
 const char *source_get_line(const char *filename, int lineno) {
   file_source_t *f = find_file(filename);
 
+  if (f == NULL) {
+    fprintf(stderr, "Attempted to print source from a nonexistent file %s\n", filename);
+    exit(1);
+  }
+
   if (lineno <= 0 || lineno > f->line_count)
     return NULL;
 
