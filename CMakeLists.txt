@@ -66,7 +66,27 @@ function(add_golden_test name input expected)
     COMMAND ${CMAKE_COMMAND} -DINPUT=${input} -DEXPECTED=${expected} -DASSEMBLE=$<TARGET_FILE:dgasm> -P ${CMAKE_SOURCE_DIR}/cmake/run_golden_test.cmake
   )
 
-  set_tests_properties(golden_${name} PROPERTIES LABELS "golden")
+  set_tests_properties(golden_${name} PROPERTIES LABELS "fuzzregression")
+endfunction()
+
+function(add_fuzz_regression_tests)
+  file(GLOB FUZZ_TESTS
+    "${CMAKE_SOURCE_DIR}/tests/fuzzregression/crash_*.s"
+  )
+
+  foreach(testfile ${FUZZ_TESTS})
+    get_filename_component(testname ${testfile} NAME_WE)
+
+    add_test(
+      NAME fuzz_${testname}
+      COMMAND ${CMAKE_COMMAND}
+        -DINPUT=${testfile}
+        -DASSEMBLER=$<TARGET_FILE:dgasm>
+        -P ${CMAKE_SOURCE_DIR}/cmake/run_fuzz_regression_test.cmake
+    )
+
+    set_tests_properties(fuzz_${testname} PROPERTIES LABELS "golden")
+  endforeach()
 endfunction()
 
 add_memcheck_test(hello ${CMAKE_SOURCE_DIR}/tests/hello.s)
@@ -74,6 +94,8 @@ add_golden_test(lef ${CMAKE_SOURCE_DIR}/tests/golden/lef.s ${CMAKE_SOURCE_DIR}/t
 add_golden_test(lda ${CMAKE_SOURCE_DIR}/tests/golden/lda.s ${CMAKE_SOURCE_DIR}/tests/golden/lda.octal)
 add_golden_test(sta ${CMAKE_SOURCE_DIR}/tests/golden/sta.s ${CMAKE_SOURCE_DIR}/tests/golden/sta.octal)
 add_golden_test(consts ${CMAKE_SOURCE_DIR}/tests/golden/constinstrs.s ${CMAKE_SOURCE_DIR}/tests/golden/constinstrs.octal)
+
+add_fuzz_regression_tests()
 
 add_custom_target(check
   COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
