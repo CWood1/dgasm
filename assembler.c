@@ -227,6 +227,9 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
     stmt = next;
   }
 
+  if (min_addr == 0xFFFF && max_addr == 0)
+    exit(0);
+
   uint16_t used_size = (max_addr - min_addr) + 1;
   uint16_t* trimmed = calloc(used_size, sizeof(uint16_t));
   if (trimmed == NULL) {
