@@ -9,10 +9,18 @@
 #define MAX_STRING 4096
 #define YY_USER_ACTION append_to_line(yytext, yyleng);
 
+#define APPEND_CHAR(c) do {                           \
+    if ((size_t)(string_buf_ptr - string_buf) >= MAX_STRING - 1) { \
+        fprintf(stderr, "String too long\n");         \
+        exit(1);                                     \
+    }                                                \
+    *string_buf_ptr++ = (c);                         \
+} while (0)
+
 static char string_buf[MAX_STRING];
 static char *string_buf_ptr;
 
-char* current_line = NULL;
+static char* current_line = NULL;
 static size_t current_line_len = 0;
 
 #define MAX_INCLUDE_DEPTH 10
@@ -35,6 +43,10 @@ void append_to_line(const char* text, int len) {
 	    current_line_len = 0;
         } else {
 	    current_line = realloc(current_line, current_line_len + 2);
+	    if (current_line == NULL) {
+		fprintf(stderr, "Realloc returned NULL\n");
+		exit(1);
+            }
 	    current_line[current_line_len++] = text[i];
 	    current_line[current_line_len] = '\0';
 	}
@@ -113,19 +125,20 @@ include                      BEGIN(incl);
                                exit(1);
                              }
 
-<string>\\n                  { *string_buf_ptr++ = '\n'; }
-<string>\\t                  *string_buf_ptr++ = '\t';
-<string>\\r                  *string_buf_ptr++ = '\r';
-<string>\\b                  *string_buf_ptr++ = '\b';
-<string>\\f                  *string_buf_ptr++ = '\f';
+<string>\\n                  { APPEND_CHAR('\n'); }
+<string>\\t                  { APPEND_CHAR('\t'); }
+<string>\\r                  { APPEND_CHAR('\r'); }
+<string>\\b                  { APPEND_CHAR('\b'); }
+<string>\\f                  { APPEND_CHAR('\f'); }
 
-<string>\\(.|\n)             *string_buf_ptr++ = yytext[1];
+<string>\\(.|\n)             { APPEND_CHAR(yytext[1]); }
 
 <string>[^\\\n\"]+           {
                                char *yptr = yytext;
 
-                               while (*yptr)
-                                 *string_buf_ptr++ = *yptr++;
+                               while (*yptr) {
+                                   APPEND_CHAR(*yptr++);
+                               }
                              }
 
 ":"                          { return COLON; }
