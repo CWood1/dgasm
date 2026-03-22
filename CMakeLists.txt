@@ -93,6 +93,7 @@ add_memcheck_test(hello ${CMAKE_SOURCE_DIR}/tests/hello.s)
 add_golden_test(lef ${CMAKE_SOURCE_DIR}/tests/golden/lef.s ${CMAKE_SOURCE_DIR}/tests/golden/lef.octal)
 add_golden_test(lda ${CMAKE_SOURCE_DIR}/tests/golden/lda.s ${CMAKE_SOURCE_DIR}/tests/golden/lda.octal)
 add_golden_test(sta ${CMAKE_SOURCE_DIR}/tests/golden/sta.s ${CMAKE_SOURCE_DIR}/tests/golden/sta.octal)
+add_golden_test(nio ${CMAKE_SOURCE_DIR}/tests/golden/nio.s ${CMAKE_SOURCE_DIR}/tests/golden/nio.octal)
 add_golden_test(consts ${CMAKE_SOURCE_DIR}/tests/golden/constinstrs.s ${CMAKE_SOURCE_DIR}/tests/golden/constinstrs.octal)
 
 add_fuzz_regression_tests()
