@@ -117,7 +117,7 @@ include                      BEGIN(incl);
                                  exit(1);
                                }
 
-                               *string_buf_ptr++ = result;
+                               APPEND_CHAR(result);
                              }
 
 <string>\\[0-9]+             {
