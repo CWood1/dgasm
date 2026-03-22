@@ -763,6 +763,10 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
 
 int encode_instruction(uint16_t** buffer, int offset, statement_t* opcode_stmt, symboltbl_t* symbols, int cpu) {
   instruction_t instruction = find_instruction(opcode_stmt, cpu);
+  if (offset + instruction.size > 0xFFFF) {
+    report_error(opcode_stmt, "Instruction located off the end of memory");
+    exit(1);
+  }
 
   switch (instruction.encoding_type) {
   case ENCODING_CONSTANT:

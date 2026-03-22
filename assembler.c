@@ -2,6 +2,7 @@
 #include "assembler.h"
 #include "opcode.h"
 #include "eval.h"
+#include "error.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -23,6 +24,11 @@ offset_t* pass1(program_t* prog, int cpu) {
     case STMT_OPCODE: {
       // Instructions are easy - simply add the encoding size of the instruction to the current address
       instruction_t inst = find_instruction(current_statement, cpu);
+
+      if ((uint32_t)current_address + (uint32_t)inst.size > MAX_MEMORY_WORDS) {
+	report_error(current_statement, "Instruction located off the end of memory");
+	exit(1);
+      }
       current_address += inst.size;
       break;
     }
@@ -49,6 +55,10 @@ offset_t* pass1(program_t* prog, int cpu) {
 
       switch (current_statement->variable->type) {
       case VARIABLE_STRING:
+	if ((uint32_t)current_address + strlen(current_statement->variable->value.str) + 1 > MAX_MEMORY_WORDS) {
+	  report_error(current_statement, "String located off the end of memory");
+	  exit(1);
+	}
 	current_address += strlen(current_statement->variable->value.str) + 1;
 	break;
       case VARIABLE_PACKED_STRING: {
@@ -61,13 +71,25 @@ offset_t* pass1(program_t* prog, int cpu) {
 	  word_index++;
 	}
 
+	if ((uint32_t)current_address + word_index > MAX_MEMORY_WORDS) {
+	  report_error(current_statement, "String located off the end of memory");
+	  exit(1);
+	}
 	current_address += word_index;
 	break;
       }
       case VARIABLE_NUMBER:
+	if ((uint32_t)current_address + 1 > MAX_MEMORY_WORDS) {
+	  report_error(current_statement, "Integer located off the end of memory");
+	  exit(1);
+	}
 	current_address += 1;
 	break;
       case VARIABLE_RESV:
+	if ((uint32_t)current_address + current_statement->variable->value.resv > MAX_MEMORY_WORDS) {
+	  report_error(current_statement, "Resv located off the end of memory");
+	  exit(1);
+	}
 	current_address += current_statement->variable->value.resv;
 	break;
       }
@@ -82,6 +104,10 @@ offset_t* pass1(program_t* prog, int cpu) {
       }
       break;
     case STMT_DW:
+      if ((uint32_t)current_address + current_statement->dw->count > MAX_MEMORY_WORDS) {
+	report_error(current_statement, "dw located off the end of memory");
+	exit(1);
+      }
       current_address += current_statement->dw->count;
       break;
     }
@@ -226,6 +252,9 @@ output_t pass2(program_t* prog, symboltbl_t* symbols, int cpu) {
     free(stmt);
     stmt = next;
   }
+
+  if (min_addr == 0xFFFF && max_addr == 0)
+    exit(0);
 
   uint16_t used_size = (max_addr - min_addr) + 1;
   uint16_t* trimmed = calloc(used_size, sizeof(uint16_t));
