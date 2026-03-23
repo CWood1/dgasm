@@ -3,15 +3,15 @@
 	dev high = 077
 
 	// --- Variant sweep
-	NIO low
-	NIOS low
-	NIOC low
-	NIOP low
+	SKPBN low
+	SKPBZ low
+	SKPDN low
+	SKPDZ low
 
 	// --- Range check
-	NIO low
-	NIO high
+	SKPBN low
+	SKPBN high
 
 	// --- Device number check
-	NIO 0
-	NIO 077
+	SKPBN 0
+	SKPBN 077
