@@ -66,7 +66,7 @@ function(add_golden_test name input expected)
     COMMAND ${CMAKE_COMMAND} -DINPUT=${input} -DEXPECTED=${expected} -DASSEMBLE=$<TARGET_FILE:dgasm> -P ${CMAKE_SOURCE_DIR}/cmake/run_golden_test.cmake
   )
 
-  set_tests_properties(golden_${name} PROPERTIES LABELS "fuzzregression")
+  set_tests_properties(golden_${name} PROPERTIES LABELS "golden")
 endfunction()
 
 function(add_fuzz_regression_tests)
