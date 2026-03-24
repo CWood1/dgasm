@@ -487,9 +487,9 @@ uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, i
   }
 
   if (index == 0 && (displacement & 0x8000) != 0) {
-    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 077777", (int16_t)displacement);
+    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 32767", (int16_t)displacement);
   } else if (index != 0 && (displacement & 0x8000) != 0 && (displacement & 0xC000) != 0xC000) {
-    report_error(opcode_stmt, "Address out of range. Got %d, should be -040000 - 037777", (int16_t)displacement);
+    report_error(opcode_stmt, "Address out of range. Got %d, should be -16384 - 16383", (int16_t)displacement);
   }
 
   displacement &= 0x7FFF;
