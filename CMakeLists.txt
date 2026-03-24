@@ -97,6 +97,7 @@ add_golden_test(nio ${CMAKE_SOURCE_DIR}/tests/golden/nio.s ${CMAKE_SOURCE_DIR}/t
 add_golden_test(skp ${CMAKE_SOURCE_DIR}/tests/golden/skp.s ${CMAKE_SOURCE_DIR}/tests/golden/skp.octal)
 add_golden_test(dido ${CMAKE_SOURCE_DIR}/tests/golden/dido.s ${CMAKE_SOURCE_DIR}/tests/golden/dido.octal)
 add_golden_test(jmp ${CMAKE_SOURCE_DIR}/tests/golden/jmp.s ${CMAKE_SOURCE_DIR}/tests/golden/jmp.octal)
+add_golden_test(jsr ${CMAKE_SOURCE_DIR}/tests/golden/jsr.s ${CMAKE_SOURCE_DIR}/tests/golden/jsr.octal)
 
 add_golden_test(eval ${CMAKE_SOURCE_DIR}/tests/golden/eval.s ${CMAKE_SOURCE_DIR}/tests/golden/eval.octal)
 add_golden_test(strings ${CMAKE_SOURCE_DIR}/tests/golden/strings.s ${CMAKE_SOURCE_DIR}/tests/golden/strings.octal)
