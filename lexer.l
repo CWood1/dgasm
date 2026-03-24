@@ -142,8 +142,6 @@ include                      BEGIN(incl);
                              }
 
 ":"                          { return COLON; }
-"["                          { return OPEN_SQUARE; }
-"]"                          { return CLOSE_SQUARE; }
 "("                          { return LPAREN; }
 ")"                          { return RPAREN; }
 ","                          { return COMMA; }
@@ -167,7 +165,6 @@ section                      { return SECTION; }
 resv                         { return RESV; }
 dw                           { return DW; }
 packed                       { return PACKED; }
-"$"                          { return DOLLAR; }
 SKP                          { return SKP; }
 SZC                          { return SZC; }
 SNC                          { return SNC; }
