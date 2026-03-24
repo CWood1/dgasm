@@ -1,4 +1,4 @@
-	// Test: NIO with variant coverage and device boundaries
+	// Test: SKP with variant coverage and device boundaries
 	dev low = 0
 	dev high = 077
 
