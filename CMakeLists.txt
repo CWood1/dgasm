@@ -100,6 +100,7 @@ add_golden_test(jmp ${CMAKE_SOURCE_DIR}/tests/golden/jmp.s ${CMAKE_SOURCE_DIR}/t
 add_golden_test(jsr ${CMAKE_SOURCE_DIR}/tests/golden/jsr.s ${CMAKE_SOURCE_DIR}/tests/golden/jsr.octal)
 add_golden_test(isz ${CMAKE_SOURCE_DIR}/tests/golden/isz.s ${CMAKE_SOURCE_DIR}/tests/golden/isz.octal)
 add_golden_test(dsz ${CMAKE_SOURCE_DIR}/tests/golden/dsz.s ${CMAKE_SOURCE_DIR}/tests/golden/dsz.octal)
+add_golden_test(adc ${CMAKE_SOURCE_DIR}/tests/golden/adc.s ${CMAKE_SOURCE_DIR}/tests/golden/adc.octal)
 
 add_golden_test(eval ${CMAKE_SOURCE_DIR}/tests/golden/eval.s ${CMAKE_SOURCE_DIR}/tests/golden/eval.octal)
 add_golden_test(strings ${CMAKE_SOURCE_DIR}/tests/golden/strings.s ${CMAKE_SOURCE_DIR}/tests/golden/strings.octal)
