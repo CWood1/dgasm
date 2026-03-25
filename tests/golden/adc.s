@@ -36,4 +36,3 @@
 	
 	// --- Variant - ignore result
 	ADC# 0, 0
-	
