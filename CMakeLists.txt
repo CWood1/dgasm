@@ -108,6 +108,7 @@ add_golden_test(inc ${CMAKE_SOURCE_DIR}/tests/golden/inc.s ${CMAKE_SOURCE_DIR}/t
 add_golden_test(mov ${CMAKE_SOURCE_DIR}/tests/golden/mov.s ${CMAKE_SOURCE_DIR}/tests/golden/mov.octal)
 add_golden_test(neg ${CMAKE_SOURCE_DIR}/tests/golden/neg.s ${CMAKE_SOURCE_DIR}/tests/golden/neg.octal)
 add_golden_test(sub ${CMAKE_SOURCE_DIR}/tests/golden/sub.s ${CMAKE_SOURCE_DIR}/tests/golden/sub.octal)
+add_golden_test(elef ${CMAKE_SOURCE_DIR}/tests/golden/elef.s ${CMAKE_SOURCE_DIR}/tests/golden/elef.octal)
 
 add_golden_test(eval ${CMAKE_SOURCE_DIR}/tests/golden/eval.s ${CMAKE_SOURCE_DIR}/tests/golden/eval.octal)
 add_golden_test(strings ${CMAKE_SOURCE_DIR}/tests/golden/strings.s ${CMAKE_SOURCE_DIR}/tests/golden/strings.octal)
