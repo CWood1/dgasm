@@ -119,6 +119,7 @@ add_golden_test(eval)
 add_golden_test(strings)
 add_golden_test(directives)
 add_golden_test(constinstrs)
+add_golden_test(floatconsts)
 
 add_fuzz_regression_tests()
 

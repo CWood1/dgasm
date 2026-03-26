@@ -1,0 +1,20 @@
+	// Test: floating point instructions with no parameters
+	FCLE
+	FNS
+	FPOP
+	FPSH
+	FSA
+	FSEQ
+	FSGE
+	FSGT
+	FSLE
+	FSLT
+	FSND
+	FSNE
+	FSNER
+	FSNM
+	FSNO
+	FSNOD
+	FSNU
+	FSNUD
+	FSNUO
