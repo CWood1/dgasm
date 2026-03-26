@@ -110,6 +110,7 @@ add_golden_test(neg)
 add_golden_test(sub)
 add_golden_test(elda)
 add_golden_test(elef)
+add_golden_test(esta)
 
 add_golden_test(eval)
 add_golden_test(strings)
