@@ -511,10 +511,12 @@ uint16_t get_long_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operan
     return 0;
   }
 
+  uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
   free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
   free(opcode_stmt->opcode->operands->items[operand]->u.expr);
   free(opcode_stmt->opcode->operands->items[operand]);
-  return eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+  return imm;
 }
 
 uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
