@@ -21,6 +21,3 @@
 
 	ESTB 0, -040000, 3
 	ESTB 0, 037777, 3
-
-	// --- Indirect addressing
-	ESTB 0, @040, 0
