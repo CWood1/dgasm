@@ -116,6 +116,7 @@ add_golden_test(eldb)
 add_golden_test(dspa)
 add_golden_test(save)
 add_golden_test(anc)
+add_golden_test(bto)
 
 add_golden_test(eval)
 add_golden_test(strings)
