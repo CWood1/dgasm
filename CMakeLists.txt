@@ -126,6 +126,7 @@ add_golden_test(dsb)
 add_golden_test(ior)
 add_golden_test(ldb)
 add_golden_test(lob)
+add_golden_test(lrb)
 
 add_golden_test(eval)
 add_golden_test(strings)
