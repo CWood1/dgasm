@@ -128,6 +128,7 @@ add_golden_test(ldb)
 add_golden_test(lob)
 add_golden_test(lrb)
 add_golden_test(lsh)
+add_golden_test(psh)
 
 add_golden_test(eval)
 add_golden_test(strings)
