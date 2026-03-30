@@ -130,6 +130,7 @@ add_golden_test(lrb)
 add_golden_test(lsh)
 add_golden_test(pop)
 add_golden_test(psh)
+add_golden_test(sge)
 
 add_golden_test(eval)
 add_golden_test(strings)
