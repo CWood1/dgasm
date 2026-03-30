@@ -122,6 +122,7 @@ add_golden_test(clm)
 add_golden_test(cob)
 add_golden_test(dad)
 add_golden_test(dlsh)
+add_golden_test(dsb)
 
 add_golden_test(eval)
 add_golden_test(strings)
