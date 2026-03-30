@@ -1,4 +1,4 @@
- #include "opcode.h"
+#include "opcode.h"
 #include "eval.h"
 #include "error.h"
 
@@ -739,7 +739,7 @@ void encode_floatexload_instruction(uint16_t** buffer, int offset, instruction_t
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
-  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t acc = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
 
