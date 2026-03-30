@@ -119,6 +119,7 @@ add_golden_test(anc)
 add_golden_test(bto)
 add_golden_test(btz)
 add_golden_test(clm)
+add_golden_test(cob)
 
 add_golden_test(eval)
 add_golden_test(strings)
