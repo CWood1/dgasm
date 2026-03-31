@@ -148,11 +148,11 @@ int main(int argc, char** argv) {
     case 't':
       if (strcmp(optarg, "nova1") == 0)
 	cpu = CPU_NOVA1;
-      if (strcmp(optarg, "nova3") == 0)
+      else if (strcmp(optarg, "nova3") == 0)
 	cpu = CPU_NOVA3;
-      if (strcmp(optarg, "nova4") == 0)
+      else if (strcmp(optarg, "nova4") == 0)
 	cpu = CPU_NOVA4;
-      if (strcmp(optarg, "eclipse_s140") == 0)
+      else if (strcmp(optarg, "eclipse_s140") == 0)
 	cpu = CPU_ECLIPSE_S140;
       else {
 	fprintf(stderr, "Unrecognised CPU type %s\n", optarg);
