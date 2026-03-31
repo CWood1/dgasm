@@ -87,6 +87,15 @@ function(add_golden_nova3_test name)
   set_tests_properties(golden_nova3_${name} PROPERTIES LABELS "golden")
 endfunction()
 
+function(add_golden_nova4_test name)
+  add_test(
+    NAME golden_nova4_${name}
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_SOURCE_DIR}/tests/golden/${name}.s -DEXPECTED=${CMAKE_SOURCE_DIR}/tests/golden/${name}.octal -DASSEMBLE=$<TARGET_FILE:dgasm> -DARCH=nova4 -P ${CMAKE_SOURCE_DIR}/cmake/run_golden_test.cmake
+  )
+
+  set_tests_properties(golden_nova4_${name} PROPERTIES LABELS "golden")
+endfunction()
+
 function(add_fuzz_regression_tests)
   file(GLOB FUZZ_TESTS
     "${CMAKE_SOURCE_DIR}/tests/fuzzregression/crash_*.s"
@@ -145,6 +154,29 @@ add_golden_nova3_test(msfp)
 add_golden_nova3_test(mffp)
 add_golden_nova3_test(ret)
 add_golden_nova3_test(trap)
+
+add_golden_nova4_test(mov)
+add_golden_nova4_test(add)
+add_golden_nova4_test(and)
+add_golden_nova4_test(com)
+add_golden_nova4_test(lda)
+add_golden_nova4_test(sta)
+add_golden_nova4_test(isz)
+add_golden_nova4_test(dsz)
+add_golden_nova4_test(jmp)
+add_golden_nova4_test(jsr)
+add_golden_nova4_test(dido)
+add_golden_nova4_test(nio)
+add_golden_nova4_test(skp)
+add_golden_nova4_test(psha)
+add_golden_nova4_test(popa)
+add_golden_nova4_test(sav)
+add_golden_nova4_test(mtsp)
+add_golden_nova4_test(mtfp)
+add_golden_nova4_test(msfp)
+add_golden_nova4_test(mffp)
+add_golden_nova4_test(ret)
+add_golden_nova4_test(trap)
 
 add_golden_eclipse_s140_test(lef)
 add_golden_eclipse_s140_test(lda)
