@@ -183,6 +183,7 @@ add_golden_test(fsmd)
 add_golden_test(fsms)
 add_golden_test(fstd)
 add_golden_test(fsts)
+add_golden_test(flst)
 
 add_golden_test(eval)
 add_golden_test(strings)

@@ -754,8 +754,8 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
-  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
-  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+  uint16_t index = (argc == 1) ? 0 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
+  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
 
   encoding |= index << 11;
 
