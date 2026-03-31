@@ -177,6 +177,7 @@ add_golden_nova4_test(msfp)
 add_golden_nova4_test(mffp)
 add_golden_nova4_test(ret)
 add_golden_nova4_test(trap)
+add_golden_nova4_test(nova4)
 
 add_golden_eclipse_s140_test(lef)
 add_golden_eclipse_s140_test(lda)
