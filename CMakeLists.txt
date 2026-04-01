@@ -96,6 +96,15 @@ function(add_golden_nova4_test name)
   set_tests_properties(golden_nova4_${name} PROPERTIES LABELS "golden")
 endfunction()
 
+function(add_golden_error_test name)
+  add_test(
+    NAME golden_error_${name}
+    COMMAND ${CMAKE_COMMAND} -DINPUT=${CMAKE_SOURCE_DIR}/tests/golden/${name}.s -DASSEMBLE=$<TARGET_FILE:dgasm> -DARCH=eclipse_s140 -P ${CMAKE_SOURCE_DIR}/cmake/run_error_test.cmake
+  )
+
+  set_tests_properties(golden_error_${name} PROPERTIES LABELS "golden")
+endfunction()
+
 function(add_fuzz_regression_tests)
   file(GLOB FUZZ_TESTS
     "${CMAKE_SOURCE_DIR}/tests/fuzzregression/crash_*.s"
@@ -117,6 +126,13 @@ function(add_fuzz_regression_tests)
 endfunction()
 
 add_memcheck_test(hello ${CMAKE_SOURCE_DIR}/tests/hello.s)
+
+add_golden_error_test(error_eom_instr)
+add_golden_error_test(error_eom_string)
+add_golden_error_test(error_eom_string_packed)
+add_golden_error_test(error_eom_int)
+add_golden_error_test(error_eom_resv)
+add_golden_error_test(error_cyclic_definition)
 
 add_golden_nova1_test(mov)
 add_golden_nova1_test(add)
