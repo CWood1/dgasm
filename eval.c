@@ -93,10 +93,6 @@ uint16_t eval(expression_t* expr, symboltbl_t* symbols, int offset) {
       result = (uint32_t)(-((int32_t)left));
       break;
 
-    case OP_PLUS:
-      result = left;
-      break;
-
     default:
       fprintf(stderr, "Unknown unary operator\n");
       exit(1);

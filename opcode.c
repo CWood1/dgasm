@@ -1,4 +1,4 @@
- #include "opcode.h"
+#include "opcode.h"
 #include "eval.h"
 #include "error.h"
 
@@ -218,10 +218,10 @@ instruction_t instruction_tbl[] = {
   { "BLM",       1,     0b1011011111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
   { "BAM",       1,     0b1001011111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
   
-  { "MULS",      1,     0b1100111111001000, ENCODING_CONSTANT, CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "MUL",       1,     0b1100011111001000, ENCODING_CONSTANT, CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140 },
-  { "DIV",       1,     0b1101011111001000, ENCODING_CONSTANT, CPU_NOVA3 | CPU_NOVA4 | CPU_ECLIPSE_S140},
-  { "DIVS",      1,     0b1101111111001000, ENCODING_CONSTANT, CPU_NOVA4 | CPU_ECLIPSE_S140 },
+  { "MULS",      1,     0b1100111111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
+  { "MUL",       1,     0b1100011111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
+  { "DIV",       1,     0b1101011111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140},
+  { "DIVS",      1,     0b1101111111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
   { "DIVX",      1,     0b1011111111001000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
 
   { "FCLE",      1,     0b1101011011101000, ENCODING_CONSTANT, CPU_ECLIPSE_S140 },
@@ -255,7 +255,7 @@ instruction_t instruction_tbl[] = {
   { "DLSH",      1,     0b1000001011001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
   { "DSB",       1,     0b1000000011001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
   { "IOR",       1,     0b1000000100001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
-  { "LDB",       1,     0b1000010111001000, ENCODING_TWOACC, CPU_NOVA4 | CPU_ECLIPSE_S140 },
+  { "LDB",       1,     0b1000010111001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
   { "LOB",       1,     0b1000010100001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
   { "LRB",       1,     0b1000010101001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
   { "LSH",       1,     0b1000001010001000, ENCODING_TWOACC, CPU_ECLIPSE_S140 },
@@ -305,7 +305,7 @@ instruction_t instruction_tbl[] = {
   { "MTFP",      1,     0b0110000000000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
   { "MSFP",      1,     0b0110001010000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
   { "MFFP",      1,     0b0110000010000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
-  { "RET",       1,     0b0110010110000001, ENCODING_ONEACC, CPU_NOVA3 | CPU_NOVA4 },
+  { "RET",       1,     0b0110010110000001, ENCODING_CONSTANT, CPU_NOVA3 | CPU_NOVA4 },
   { "TRAP",      1,     0b1000000000001000, ENCODING_TRAP, CPU_NOVA3 | CPU_NOVA4 },
 
   // Nova 4 instructions
@@ -487,9 +487,9 @@ uint16_t get_long_displacement(statement_t* opcode_stmt, symboltbl_t* symbols, i
   }
 
   if (index == 0 && (displacement & 0x8000) != 0) {
-    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 077777", (int16_t)displacement);
+    report_error(opcode_stmt, "Address out of range. Got %d, should be 0 - 32767", (int16_t)displacement);
   } else if (index != 0 && (displacement & 0x8000) != 0 && (displacement & 0xC000) != 0xC000) {
-    report_error(opcode_stmt, "Address out of range. Got %d, should be -040000 - 037777", (int16_t)displacement);
+    report_error(opcode_stmt, "Address out of range. Got %d, should be -16384 - 16383", (int16_t)displacement);
   }
 
   displacement &= 0x7FFF;
@@ -511,10 +511,12 @@ uint16_t get_long_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operan
     return 0;
   }
 
+  uint16_t imm = eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+
   free_eval(opcode_stmt->opcode->operands->items[operand]->u.expr);
   free(opcode_stmt->opcode->operands->items[operand]->u.expr);
   free(opcode_stmt->opcode->operands->items[operand]);
-  return eval(opcode_stmt->opcode->operands->items[operand]->u.expr, symbols, offset);
+  return imm;
 }
 
 uint16_t get_short_imm(statement_t* opcode_stmt, symboltbl_t* symbols, int operand, int offset) {
@@ -737,7 +739,7 @@ void encode_floatexload_instruction(uint16_t** buffer, int offset, instruction_t
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 2, 3);
-  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
+  uint16_t index = (argc == 2) ? 0 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
   uint16_t acc = get_accumulator(opcode_stmt, symbols, 0, offset);
   uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
 
@@ -752,8 +754,8 @@ void encode_floatexloadnoacc_instruction(uint16_t** buffer, int offset, instruct
   uint16_t encoding = instruction->base_encoding;
 
   int argc = validate_ranged_argument_count(opcode_stmt, 1, 2);
-  uint16_t index = (argc == 2) ? 1 : get_addressing_mode(opcode_stmt, symbols, 2, offset);
-  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 1, offset, index);
+  uint16_t index = (argc == 1) ? 0 : get_addressing_mode(opcode_stmt, symbols, 1, offset);
+  uint16_t disp = get_long_displacement(opcode_stmt, symbols, 0, offset, index);
 
   encoding |= index << 11;
 

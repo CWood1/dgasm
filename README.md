@@ -1,8 +1,8 @@
-# DGASM - The assembler for Data General Novae and Eclipses
+# Data General Assembler
 
 A modern, table-driven assembler for the **Data General Nova** and **Eclipse** families of minicomputers.
 
-dgasm is a portable cross-assembler, written in C, leveraging Flex and Bison. It is designed to run anywhere,
+Data General Assembler is a portable cross-assembler, written in C, leveraging Flex and Bison. It is designed to run anywhere,
 and cross-assemble targeting configurable Nova and Eclipse variants.
 
 ---
@@ -81,7 +81,7 @@ Assembler works. Currently productionising for v1.
 
 ## Design Philosophy
 
-dgasm is designed with modern conveniences in mind. The architecture is fairly traditional for an assembler:
+Data General Assembler is designed with modern conveniences in mind. The architecture is fairly traditional for an assembler:
 
 1. Lexical analysis
 2. Parsing
@@ -90,7 +90,7 @@ dgasm is designed with modern conveniences in mind. The architecture is fairly t
 5. Address space layout and validation
 6. Binary emission
 
-dgasm provides conveniences such as variable emplacement, assemble-time const expressions, etc to aid in the
+Data General Assembler provides conveniences such as variable emplacement, assemble-time const expressions, etc to aid in the
 development process.
 
 Instruction encoding is table driven, to facilitate easy extension of the assembler.
@@ -98,11 +98,6 @@ Instruction encoding is table driven, to facilitate easy extension of the assemb
 ---
 
 ## Roadmap
-### Roadmap to v1
-* Add a warning, for when a long instruction follows a skip, as this is invalid.
-* Documentation: manual/wiki.
-* Package for easy install.
-
 ### Roadmap to v2
 * Add further Eclipse instruction sets.
 * Add support for WCS via encoding, rather than using constants
