@@ -6,6 +6,7 @@
 #include "error.h"
 #include "opcode.h"
 #include "config.h"
+#include "output.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,67 +24,6 @@ extern include_frame_t include_stack[];
 extern FILE* yyin;
 int yylex_destroy(void);
 
-int write_raw_binary(const char *filename, const output_t *out) {
-  FILE *f = fopen(filename, "wb");
-  if (!f) {
-    perror("fopen");
-    return -1;
-  }
-
-  fwrite(out->data, sizeof(uint16_t), out->size, f);
-
-  fclose(f);
-  return 0;
-}
-
-int write_octal_listing(FILE *stream, const output_t *out) {
-  if (!stream || !out)
-    return -1;
-
-  uint16_t addr = out->start_addr;
-
-  for (uint16_t i = 0; i < out->size; i++, addr++) {
-    fprintf(stream, "%06o: %06o\n",
-	    addr,
-	    out->data[i]);
-  }
-
-  return 0;
-}
-
-int write_octal_simh(FILE *stream, const output_t* out) {
-  if (!stream || !out)
-    return -1;
-
-  uint16_t addr = out->start_addr;
-
-  for (uint16_t i = 0; i < out->size; i++, addr++) {
-    fprintf(stream, "dep %06o %06o\n",
-	    addr,
-	    out->data[i]);
-  }
-
-  return 0;
-}
-
-int write_octal_eclipse(FILE *stream, const output_t *out) {
-  if (!stream || !out)
-    return -1;
-
-  uint16_t addr = out->start_addr;
-
-  fprintf(stream, "K0%o/%#o\n", addr, out->data[0]);
-
-  for (uint16_t i = 1; i < out->size; i++, addr++) {
-    fprintf(stream, "%#o\n",
-	    out->data[i]);
-  }
-
-  fprintf(stream, "K\n");
-
-  return 0;
-}
-
 void usage(const char* progname) {
   printf("Usage: %s [options] <input.s>\n\n", progname);
 
@@ -100,7 +40,8 @@ void usage(const char* progname) {
   printf("  binary        Raw machine code\n");
   printf("  octal         Human-readable octal dump\n");
   printf("  eclipse       DG Eclipse-compatible object format\n");
-  printf("  simh          SIMH-compatible loadable format\n\n");
+  printf("  simh          SIMH-compatible loadable format\n");
+  printf("  ab            DG Binary Loader compatible absolute binary file\n\n");
     
   printf("Example:\n");
   printf("  %s -t nova3 -f simh -o boot.out main.s\n", progname);
@@ -135,7 +76,8 @@ int main(int argc, char** argv) {
       if (strcmp(optarg, "bin") == 0 ||
 	  strcmp(optarg, "octal") == 0 ||
 	  strcmp(optarg, "eclipse") == 0 ||
-	  strcmp(optarg, "simh") == 0) {
+	  strcmp(optarg, "simh") == 0 ||
+	  strcmp(optarg, "ab") == 0) {
 	outputformat = optarg;
       } else {
 	fprintf(stderr,
@@ -224,12 +166,21 @@ int main(int argc, char** argv) {
     if (write_raw_binary(outputfn, &output) != 0) {
       return 1;
     }
+  } else if (strcmp(outputformat, "ab") == 0) {
+    if (outputfn == NULL) {
+      usage(argv[0]);
+      return 1;
+    }
+
+    if (write_absolute_binary(outputfn, &output) != 0) {
+      return 1;
+    }
   } else {
     if (outputfn) {      
       FILE *out = fopen(outputfn, "w");
       if (!f) {
-        perror("fopen");
-        return -1;
+	perror("fopen");
+	return -1;
       }
 
       if (strcmp(outputformat, "octal") == 0)
